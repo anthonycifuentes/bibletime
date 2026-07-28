@@ -26,7 +26,7 @@ const data = {
   navMain: [
     {
       title: "Bible",
-      url: "#",
+      url: "/bible",
       icon: <HugeiconsIcon icon={BookOpen02Icon} strokeWidth={2} />,
     },
     {

@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
 
 import { AppSidebar } from "@/modules/core/layout"
+import { AppQueryProvider } from "@/modules/core/providers"
 import {
   SidebarInset,
   SidebarProvider,
@@ -48,20 +49,22 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <header className="flex h-16 shrink-0 items-center gap-2">
-                <div className="flex items-center gap-2 px-4">
-                  <SidebarTrigger className="-ml-1" />
-                  <Separator orientation="vertical" className="mr-2 h-4" />
-                </div>
-              </header>
-              {children}
-            </SidebarInset>
-          </SidebarProvider>
-        </TooltipProvider>
+        <AppQueryProvider>
+          <TooltipProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset>
+                <header className="flex h-16 shrink-0 items-center gap-2">
+                  <div className="flex items-center gap-2 px-4">
+                    <SidebarTrigger className="-ml-1" />
+                    <Separator orientation="vertical" className="mr-2 h-4" />
+                  </div>
+                </header>
+                {children}
+              </SidebarInset>
+            </SidebarProvider>
+          </TooltipProvider>
+        </AppQueryProvider>
         <Scripts />
       </body>
     </html>

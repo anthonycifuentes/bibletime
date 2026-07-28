@@ -17,3 +17,7 @@ todos.json
 
 # typescript
 *.tsbuildinfo
+
+# raw Bible source data (build-time input for apps/bibletime/scripts/build-bible-data.ts;
+# the trimmed output it produces is committed at apps/bibletime/public/bible-data/)
+/RVR1960_vid_149.json
