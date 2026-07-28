@@ -1,0 +1,20 @@
+{
+  "name": "desktop",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "concurrently -k -n web,electron -c blue,green \"pnpm --filter web dev\" \"wait-on http://localhost:3000 && tsc -p tsconfig.json && electron .\"",
+    "build": "tsc -p tsconfig.json",
+    "start": "electron .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "concurrently": "^10.0.4",
+    "electron": "^43.2.0",
+    "typescript": "^6",
+    "wait-on": "^9.1.0"
+  }
+}

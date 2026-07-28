@@ -1,0 +1,71 @@
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-stretch: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-RegularCondensed.woff2') format('woff2');
+  font-weight: 400;
+  font-stretch: condensed;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-RegularExpanded.woff2') format('woff2');
+  font-weight: 400;
+  font-stretch: expanded;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-stretch: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-MediumCondensed.woff2') format('woff2');
+  font-weight: 500;
+  font-stretch: condensed;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-MediumExpanded.woff2') format('woff2');
+  font-weight: 500;
+  font-stretch: expanded;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-stretch: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-BoldCondensed.woff2') format('woff2');
+  font-weight: 700;
+  font-stretch: condensed;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Essential Sans Display';
+  src: url('./EssentialSansDisplay-BoldExpanded.woff2') format('woff2');
+  font-weight: 700;
+  font-stretch: expanded;
+  font-display: swap;
+}

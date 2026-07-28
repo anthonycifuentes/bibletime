@@ -1,0 +1,9 @@
+{
+  "name": "@workspace/fonts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./essential-sans.css": "./essential-sans/index.css"
+  }
+}

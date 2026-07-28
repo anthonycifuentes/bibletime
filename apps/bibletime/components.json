@@ -11,8 +11,8 @@
   },
   "iconLibrary": "hugeicons",
   "aliases": {
-    "components": "@/components",
-    "hooks": "@/hooks",
+    "components": "@/modules/core/components",
+    "hooks": "@/modules/core/hooks",
     "lib": "@/lib",
     "utils": "@workspace/ui/lib/utils",
     "ui": "@workspace/ui/components"
