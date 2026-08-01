@@ -1,11 +1,12 @@
-import { useNavigate } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 import type { FormEvent } from "react"
 
 import type { Book } from "@/modules/bible/interfaces"
 import { parseReference } from "@/modules/bible/lib/parse-reference"
+import { normalizeText } from "@/modules/bible/lib/normalize-text"
 import { BookList } from "@/modules/bible/components/book-list"
 import { Input } from "@workspace/ui/components/input"
+import { useTranslation } from "@/modules/core/i18n"
 
 interface BookSearchListProps {
   books: Book[]
@@ -13,30 +14,26 @@ interface BookSearchListProps {
   selectedBookUsfm?: string
   /** Called with a book's USFM code when a row is clicked (not via typed reference). */
   onSelectBook: (bookUsfm: string) => void
+  /** Called instead of `onSelectBook` when a full typed reference (e.g. "Juan 3:16") resolves. */
+  onResolveReference?: (result: { bookUsfm: string; chapterUsfm: string; verseNumber?: number }) => void
 }
-
-const stripAccents = (value: string): string =>
-  value.normalize("NFD").replace(/[̀-ͯ]/g, "")
-
-const normalize = (value: string): string => stripAccents(value).toLowerCase().trim()
 
 /**
  * One input serving two purposes: as-you-type it narrows `books` by an
  * accent/case-insensitive substring match on name, while submitting (Enter)
  * a full typed reference (e.g. "Juan 3:16") resolves it via `parseReference`
- * and navigates straight to that book/chapter/verse instead of filtering.
- * Navigation only ever changes the `/bible` route's search params — the
- * path never changes.
+ * and reports the resolved book/chapter/verse via `onResolveReference`
+ * instead of filtering.
  */
-export function BookSearchList({ books, selectedBookUsfm, onSelectBook }: BookSearchListProps) {
-  const navigate = useNavigate()
+export function BookSearchList({ books, selectedBookUsfm, onSelectBook, onResolveReference }: BookSearchListProps) {
+  const { t } = useTranslation()
   const [query, setQuery] = useState("")
   const [notFoundInput, setNotFoundInput] = useState<string | null>(null)
 
   const filteredBooks = useMemo(() => {
-    const normalizedQuery = normalize(query)
+    const normalizedQuery = normalizeText(query)
     if (!normalizedQuery) return books
-    return books.filter((book) => normalize(book.name).includes(normalizedQuery))
+    return books.filter((book) => normalizeText(book.name).includes(normalizedQuery))
   }, [books, query])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -50,13 +47,10 @@ export function BookSearchList({ books, selectedBookUsfm, onSelectBook }: BookSe
     if (result.status === "resolved") {
       setNotFoundInput(null)
       setQuery("")
-      await navigate({
-        to: "/bible",
-        search: {
-          book: result.bookUsfm,
-          chapter: result.chapterUsfm,
-          verse: result.verseNumber,
-        },
+      onResolveReference?.({
+        bookUsfm: result.bookUsfm,
+        chapterUsfm: result.chapterUsfm,
+        verseNumber: result.verseNumber,
       })
       return
     }
@@ -69,29 +63,31 @@ export function BookSearchList({ books, selectedBookUsfm, onSelectBook }: BookSe
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <form onSubmit={(event) => void handleSubmit(event)}>
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <form className="shrink-0" onSubmit={(event) => void handleSubmit(event)}>
         <Input
           value={query}
           onChange={(event) => {
             setQuery(event.target.value)
             setNotFoundInput(null)
           }}
-          placeholder="Filtrar o buscar (ej. Juan 3:16)"
-          aria-label="Filtrar libros o buscar referencia bíblica"
+          placeholder={t("bible.search.placeholder")}
+          aria-label={t("bible.search.ariaLabel")}
         />
       </form>
       {notFoundInput ? (
-        <p className="text-sm text-destructive">
-          No se encontró la referencia &quot;{notFoundInput}&quot;.
+        <p className="shrink-0 text-sm text-destructive">
+          {t("bible.search.notFound", { query: notFoundInput })}
         </p>
       ) : null}
-      <BookList
-        books={filteredBooks}
-        selectedBookUsfm={selectedBookUsfm}
-        onSelectBook={onSelectBook}
-        className="grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1"
-      />
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <BookList
+          books={filteredBooks}
+          selectedBookUsfm={selectedBookUsfm}
+          onSelectBook={onSelectBook}
+          className="grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1"
+        />
+      </div>
     </div>
   )
 }

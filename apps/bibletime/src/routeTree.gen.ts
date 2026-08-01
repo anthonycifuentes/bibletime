@@ -10,43 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as BibleIndexRouteImport } from './routes/bible/index'
+import { Route as LibraryIndexRouteImport } from './routes/library/index'
+import { Route as PresentIndexRouteImport } from './routes/present/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as TemplatesTemplateIdRouteImport } from './routes/templates/$templateId'
+import { Route as TemplatesNewRouteImport } from './routes/templates/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BibleIndexRoute = BibleIndexRouteImport.update({
-  id: '/bible/',
-  path: '/bible/',
+const LibraryIndexRoute = LibraryIndexRouteImport.update({
+  id: '/library/',
+  path: '/library/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresentIndexRoute = PresentIndexRouteImport.update({
+  id: '/present/',
+  path: '/present/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesTemplateIdRoute = TemplatesTemplateIdRouteImport.update({
+  id: '/templates/$templateId',
+  path: '/templates/$templateId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesNewRoute = TemplatesNewRouteImport.update({
+  id: '/templates/new',
+  path: '/templates/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/bible/': typeof BibleIndexRoute
+  '/templates/$templateId': typeof TemplatesTemplateIdRoute
+  '/templates/new': typeof TemplatesNewRoute
+  '/library/': typeof LibraryIndexRoute
+  '/present/': typeof PresentIndexRoute
+  '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/bible': typeof BibleIndexRoute
+  '/templates/$templateId': typeof TemplatesTemplateIdRoute
+  '/templates/new': typeof TemplatesNewRoute
+  '/library': typeof LibraryIndexRoute
+  '/present': typeof PresentIndexRoute
+  '/settings': typeof SettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/bible/': typeof BibleIndexRoute
+  '/templates/$templateId': typeof TemplatesTemplateIdRoute
+  '/templates/new': typeof TemplatesNewRoute
+  '/library/': typeof LibraryIndexRoute
+  '/present/': typeof PresentIndexRoute
+  '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bible/'
+  fullPaths:
+    | '/'
+    | '/templates/$templateId'
+    | '/templates/new'
+    | '/library/'
+    | '/present/'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bible'
-  id: '__root__' | '/' | '/bible/'
+  to:
+    | '/'
+    | '/templates/$templateId'
+    | '/templates/new'
+    | '/library'
+    | '/present'
+    | '/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/templates/$templateId'
+    | '/templates/new'
+    | '/library/'
+    | '/present/'
+    | '/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BibleIndexRoute: typeof BibleIndexRoute
+  TemplatesTemplateIdRoute: typeof TemplatesTemplateIdRoute
+  TemplatesNewRoute: typeof TemplatesNewRoute
+  LibraryIndexRoute: typeof LibraryIndexRoute
+  PresentIndexRoute: typeof PresentIndexRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,11 +117,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/bible/': {
-      id: '/bible/'
-      path: '/bible'
-      fullPath: '/bible/'
-      preLoaderRoute: typeof BibleIndexRouteImport
+    '/library/': {
+      id: '/library/'
+      path: '/library'
+      fullPath: '/library/'
+      preLoaderRoute: typeof LibraryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/present/': {
+      id: '/present/'
+      path: '/present'
+      fullPath: '/present/'
+      preLoaderRoute: typeof PresentIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/templates/$templateId': {
+      id: '/templates/$templateId'
+      path: '/templates/$templateId'
+      fullPath: '/templates/$templateId'
+      preLoaderRoute: typeof TemplatesTemplateIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/templates/new': {
+      id: '/templates/new'
+      path: '/templates/new'
+      fullPath: '/templates/new'
+      preLoaderRoute: typeof TemplatesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -70,7 +157,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BibleIndexRoute: BibleIndexRoute,
+  TemplatesTemplateIdRoute: TemplatesTemplateIdRoute,
+  TemplatesNewRoute: TemplatesNewRoute,
+  LibraryIndexRoute: LibraryIndexRoute,
+  PresentIndexRoute: PresentIndexRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

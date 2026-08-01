@@ -1,3 +1,5 @@
+export * from "./downloads"
 export * from "./get-bible-data"
+export * from "./get-bible-versions"
 export * from "./get-book"
 export * from "./get-chapter"

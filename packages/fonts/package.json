@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./essential-sans.css": "./essential-sans/index.css"
+    "./essential-sans.css": "./essential-sans/index.css",
+    "./bundled-fonts.css": "./bundled/index.css"
   }
 }

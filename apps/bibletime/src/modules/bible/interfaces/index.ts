@@ -72,3 +72,57 @@ export interface BibleVersion {
   copyright: BibleCopyright
   books: Book[]
 }
+
+/** One translation as listed by the remote snapshots catalog (`bible-version-catalog`). */
+export interface BibleVersionCatalogEntry {
+  version_id: number
+  local_abbreviation: string
+  local_title: string
+  json_url: string
+  lang_name: string
+  lang_key: string
+}
+
+/**
+ * - `bundled`: ships with the app, always readable offline, no download needed.
+ * - `downloaded`: fetched once and stored in the local downloads folder (desktop only).
+ * - `available`: listed in the catalog but not downloaded — viewable online only.
+ * - `downloading` / `error`: transient states while a download is in flight or failed.
+ */
+export type BibleVersionStatus = "bundled" | "downloaded" | "available" | "downloading" | "error"
+
+/** A catalog entry plus its local availability, for the version selector. */
+export interface BibleVersionSummary extends BibleVersionCatalogEntry {
+  status: BibleVersionStatus
+}
+
+/** Where a `BibleVersion`'s data should be read from for a given selection. */
+export type BibleDataSource =
+  | { kind: "bundled" }
+  | { kind: "downloaded"; versionId: number }
+  | { kind: "network"; versionId: number; jsonUrl: string }
+
+/** Metadata for a translation downloaded to the local downloads folder (desktop only). */
+export interface DownloadedBibleVersionMeta {
+  version_id: number
+  local_abbreviation: string
+  local_title: string
+  json_url: string
+  downloaded_at: number
+  bytes: number
+}
+
+/**
+ * Local storage backend for downloaded Bible versions. Two implementations
+ * back this: a no-op driver for the plain web build, and a filesystem-backed
+ * one (via the Electron preload bridge) for desktop — chosen at runtime by
+ * feature detection, see `getBibleVersionDownloads`.
+ */
+export interface BibleVersionDownloadDriver {
+  /** Whether this driver can actually persist downloads, or is read-only/unsupported. */
+  readonly canDownload: boolean
+  list: () => Promise<DownloadedBibleVersionMeta[]>
+  download: (entry: BibleVersionCatalogEntry) => Promise<DownloadedBibleVersionMeta>
+  read: (versionId: number) => Promise<BibleVersion>
+  remove: (versionId: number) => Promise<void>
+}
