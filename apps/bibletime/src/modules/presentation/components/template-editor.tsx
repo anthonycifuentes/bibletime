@@ -19,14 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select"
-import { Slider } from "@workspace/ui/components/slider"
+import { SliderComfortable } from "@workspace/ui/components/slider-comfortable"
 import { cn } from "@workspace/ui/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   AiMagicIcon,
   Delete02Icon,
-  MinusSignIcon,
-  PlusSignIcon,
   TextAlignCenterIcon,
   TextAlignLeftIcon,
   TextAlignRightIcon,
@@ -60,54 +58,6 @@ function SettingRow({ label, children }: { label: string; children: ReactNode })
     <div className="flex items-center justify-between gap-4 py-2">
       <span className="text-sm text-muted-foreground">{label}</span>
       {children}
-    </div>
-  )
-}
-
-function Stepper({
-  value,
-  onChange,
-  step = 1,
-  min,
-  max,
-  suffix,
-}: {
-  value: number
-  onChange: (value: number) => void
-  step?: number
-  min?: number
-  max?: number
-  suffix?: string
-}) {
-  const clamp = (next: number) => {
-    let result = Math.round(next * 100) / 100
-    if (min !== undefined) result = Math.max(min, result)
-    if (max !== undefined) result = Math.min(max, result)
-    return result
-  }
-
-  return (
-    <div className="flex items-center gap-1">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon-sm"
-        onClick={() => onChange(clamp(value - step))}
-      >
-        <HugeiconsIcon icon={MinusSignIcon} strokeWidth={2} />
-      </Button>
-      <span className="w-12 text-center text-sm tabular-nums">
-        {value}
-        {suffix}
-      </span>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon-sm"
-        onClick={() => onChange(clamp(value + step))}
-      >
-        <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
-      </Button>
     </div>
   )
 }
@@ -323,37 +273,34 @@ export function TemplateEditor({ template, onChange, onReset, canUseVideoBackgro
                     ? background.params[control.key]
                     : control.default
 
-                return (
+                return control.type === "number" ? (
+                  <SliderComfortable
+                    key={control.key}
+                    variant="scrubber"
+                    label={control.label}
+                    min={control.min}
+                    max={control.max}
+                    step={control.step}
+                    value={typeof currentValue === "number" ? currentValue : control.default}
+                    onChange={(value) => setBackgroundParam(control.key, value)}
+                    formatValue={(value) => value.toFixed(2)}
+                  />
+                ) : (
                   <SettingRow key={control.key} label={control.label}>
-                    {control.type === "number" ? (
-                      <div className="flex w-40 items-center gap-2">
-                        <Slider
-                          min={control.min}
-                          max={control.max}
-                          step={control.step}
-                          value={typeof currentValue === "number" ? currentValue : control.default}
-                          onValueChange={(value) => setBackgroundParam(control.key, value)}
-                        />
-                        <span className="w-10 text-right text-xs text-muted-foreground tabular-nums">
-                          {(typeof currentValue === "number" ? currentValue : control.default).toFixed(2)}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={typeof currentValue === "string" ? currentValue : control.default}
-                          onChange={(event) => setBackgroundParam(control.key, event.target.value)}
-                          className="size-8 cursor-pointer rounded-md border border-input bg-transparent p-0.5"
-                        />
-                        <Input
-                          value={typeof currentValue === "string" ? currentValue : control.default}
-                          onChange={(event) => setBackgroundParam(control.key, event.target.value)}
-                          className="w-24"
-                          aria-label={control.label}
-                        />
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={typeof currentValue === "string" ? currentValue : control.default}
+                        onChange={(event) => setBackgroundParam(control.key, event.target.value)}
+                        className="size-8 cursor-pointer rounded-md border border-input bg-transparent p-0.5"
+                      />
+                      <Input
+                        value={typeof currentValue === "string" ? currentValue : control.default}
+                        onChange={(event) => setBackgroundParam(control.key, event.target.value)}
+                        className="w-24"
+                        aria-label={control.label}
+                      />
+                    </div>
                   </SettingRow>
                 )
               })
@@ -404,16 +351,16 @@ export function TemplateEditor({ template, onChange, onReset, canUseVideoBackgro
             </div>
           </SettingRow>
 
-          <SettingRow label="Tamaño">
-            <Stepper
-              value={template.fontSize}
-              onChange={(value) => onChange({ fontSize: value })}
-              step={2}
-              min={16}
-              max={96}
-              suffix="px"
-            />
-          </SettingRow>
+          <SliderComfortable
+            variant="scrubber"
+            label="Tamaño"
+            value={template.fontSize}
+            onChange={(value) => onChange({ fontSize: value })}
+            step={2}
+            min={16}
+            max={96}
+            formatValue={(value) => `${value}px`}
+          />
 
           <SettingRow label="Estilo">
             <div className="flex items-center gap-1">
@@ -505,26 +452,27 @@ export function TemplateEditor({ template, onChange, onReset, canUseVideoBackgro
           <CardTitle>Espaciado</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
-          <SettingRow label="Interlineado">
-            <Stepper
-              value={template.lineHeight}
-              onChange={(value) => onChange({ lineHeight: value })}
-              step={0.1}
-              min={1}
-              max={2.5}
-            />
-          </SettingRow>
+          <SliderComfortable
+            variant="scrubber"
+            label="Interlineado"
+            value={template.lineHeight}
+            onChange={(value) => onChange({ lineHeight: value })}
+            step={0.1}
+            min={1}
+            max={2.5}
+            formatValue={(value) => value.toFixed(2)}
+          />
 
-          <SettingRow label="Espaciado de letras">
-            <Stepper
-              value={template.letterSpacing}
-              onChange={(value) => onChange({ letterSpacing: value })}
-              step={0.01}
-              min={-0.05}
-              max={0.3}
-              suffix="em"
-            />
-          </SettingRow>
+          <SliderComfortable
+            variant="scrubber"
+            label="Espaciado de letras"
+            value={template.letterSpacing}
+            onChange={(value) => onChange({ letterSpacing: value })}
+            step={0.01}
+            min={-0.05}
+            max={0.3}
+            formatValue={(value) => `${value.toFixed(2)}em`}
+          />
         </CardContent>
       </Card>
 

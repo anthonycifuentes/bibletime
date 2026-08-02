@@ -1,4 +1,5 @@
 import type { BiblePassageItemData, Project } from "@/modules/library/interfaces"
+import type { BottomTab } from "@/modules/library/actions/use-console-store"
 import { BiblePickerPanel } from "@/modules/library/components/bible-picker-panel"
 import { PlaceholderPicker } from "@/modules/library/components/placeholder-picker"
 import { ProjectList } from "@/modules/library/components/project-list"
@@ -7,7 +8,7 @@ import { Tabs } from "@workspace/ui/components/tabs"
 import type { TabItem } from "@workspace/ui/components/tabs"
 import { useTranslation } from "@/modules/core/i18n"
 
-export type BottomTab = "projects" | "bible" | "songs" | "media" | "templates"
+export type { BottomTab }
 
 interface BottomDrawerProps {
   activeTab: BottomTab
@@ -19,8 +20,11 @@ interface BottomDrawerProps {
   onCreateProject: (name: string) => void
   onRenameProject: (projectId: string, name: string) => void
   onDeleteProject: (projectId: string) => void
+  onExportProject: (projectId: string) => void
+  onOpenProjectFile: (contents: string) => Promise<unknown>
   openFolderId: string | null
   onAddVerse: (item: BiblePassageItemData, templateId: string | undefined) => void
+  onAddVerses: (items: BiblePassageItemData[], templateId: string | undefined) => void
 }
 
 /**
@@ -40,8 +44,11 @@ export function BottomDrawer({
   onCreateProject,
   onRenameProject,
   onDeleteProject,
+  onExportProject,
+  onOpenProjectFile,
   openFolderId,
   onAddVerse,
+  onAddVerses,
 }: BottomDrawerProps) {
   const { t } = useTranslation()
   const templatesState = useTemplates()
@@ -74,11 +81,17 @@ export function BottomDrawer({
             onCreateProject={onCreateProject}
             onRenameProject={onRenameProject}
             onDeleteProject={onDeleteProject}
+            onExportProject={onExportProject}
+            onOpenProjectFile={onOpenProjectFile}
           />
         ) : null}
 
         {activeTab === "bible" ? (
-          <BiblePickerPanel hasOpenFolder={openFolderId !== null} onAddVerse={onAddVerse} />
+          <BiblePickerPanel
+            hasOpenFolder={openFolderId !== null}
+            onAddVerse={onAddVerse}
+            onAddVerses={onAddVerses}
+          />
         ) : null}
 
         {activeTab === "songs" ? (

@@ -8,7 +8,12 @@ import { Button } from "@workspace/ui/components/button"
 import { Pill } from "@workspace/ui/components/pill"
 import { cn } from "@workspace/ui/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Copy01Icon, Delete02Icon, Download03Icon, Edit02Icon } from "@hugeicons/core-free-icons"
+import {
+  Copy01Icon,
+  Delete02Icon,
+  Download03Icon,
+  Edit02Icon,
+} from "@hugeicons/core-free-icons"
 
 type TemplatesState = ReturnType<typeof useTemplates>
 
@@ -17,7 +22,8 @@ const isBundled = (id: string): boolean => id.startsWith("bundled-")
 /** A representative line of sample text, so a template's card actually shows how it reads. */
 const SAMPLE_TEXT = "Amor, gozo, paz, paciencia, benignidad."
 
-const CARD_SELECTED_RING = "ring-2 ring-ring ring-offset-2 ring-offset-background"
+const CARD_SELECTED_RING =
+  "ring-2 ring-ring ring-offset-2 ring-offset-background"
 
 /** Stops a card action (duplicate/edit/export/delete) from also selecting the card underneath it. */
 const stop = (event: MouseEvent) => event.stopPropagation()
@@ -46,18 +52,29 @@ export function TemplateManager({
 }: TemplatesState & { showToolbar?: boolean }) {
   const navigate = useNavigate()
 
-  const handleDuplicate = async (name: string, template: (typeof templates)[number]["template"]) => {
+  const handleDuplicate = async (
+    name: string,
+    template: (typeof templates)[number]["template"]
+  ) => {
     const saved = await create(`Copia de ${name}`)
     await update(saved.id, { template })
-    void navigate({ to: "/templates/$templateId", params: { templateId: saved.id } })
+    void navigate({
+      to: "/templates/$templateId",
+      params: { templateId: saved.id },
+    })
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {showToolbar ? <TemplateLibraryToolbar canWrite={canWrite} importTemplate={importTemplate} /> : null}
+      {showToolbar ? (
+        <TemplateLibraryToolbar
+          canWrite={canWrite}
+          importTemplate={importTemplate}
+        />
+      ) : null}
 
       <div className="@container">
-        <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @3xl:grid-cols-3 @4xl:grid-cols-4 @5xl:grid-cols-5 @7xl:grid-cols-6">
           {templates.map((item) => {
             const active = item.id === activeId
             const bundled = isBundled(item.id)
@@ -88,7 +105,9 @@ export function TemplateManager({
 
                 <div className="flex flex-col gap-2 p-3">
                   <div className="flex items-center gap-2">
-                    <span className="flex-1 truncate text-sm font-medium">{item.name}</span>
+                    <span className="flex-1 truncate text-sm font-medium">
+                      {item.name}
+                    </span>
                     {active ? <Pill variant="signal">Activa</Pill> : null}
                   </div>
 
@@ -125,7 +144,10 @@ export function TemplateManager({
                         size="icon-sm"
                         onClick={(event) => {
                           stop(event)
-                          void navigate({ to: "/templates/$templateId", params: { templateId: item.id } })
+                          void navigate({
+                            to: "/templates/$templateId",
+                            params: { templateId: item.id },
+                          })
                         }}
                       >
                         <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />

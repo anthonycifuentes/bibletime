@@ -37,6 +37,7 @@ export function PreviewPanel({ item, templates }: PreviewPanelProps) {
           template={content?.template ?? DEFAULT_SLIDE_TEMPLATE}
           text={content?.text}
           reference={content?.reference}
+          versionLabel={content?.versionLabel}
           emptyMessage={content?.emptyMessage ?? t("library.previewEmpty")}
           frameClassName="h-full w-full"
         />
@@ -49,7 +50,12 @@ export function PreviewPanel({ item, templates }: PreviewPanelProps) {
         onClick={() => {
           if (!content) return
           window.open("/present", "bibletime-present")
-          setLiveSlide({ text: content.text, reference: content.reference, template: content.template })
+          setLiveSlide({
+            text: content.text,
+            reference: content.reference,
+            versionLabel: content.versionLabel,
+            template: content.template,
+          })
         }}
       >
         <HugeiconsIcon icon={PlayIcon} strokeWidth={2} />

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, net, protocol } from "electron"
+import { app, BrowserWindow, dialog, ipcMain, net, protocol } from "electron"
 import crypto from "node:crypto"
 import fs from "node:fs/promises"
 import path from "node:path"
@@ -244,7 +244,18 @@ interface Folder {
   updatedAt: number
 }
 
-const libraryDir = path.join(app.getPath("userData"), "library-folders")
+/**
+ * Where project metadata and their folders/slides live — defaults to inside
+ * `userData`, but can be relocated by the user (see `AppSettings` /
+ * `registerProjectHandlers`'s `project-settings:*` handlers below). Both
+ * `projectsDir` and `libraryDir` are recomputed from this whenever it
+ * changes, so a project (its metadata file) and its content (folder files)
+ * always move together as one self-contained unit.
+ */
+const defaultProjectsDataDir = app.getPath("userData")
+let projectsDataDir = defaultProjectsDataDir
+
+let libraryDir = path.join(projectsDataDir, "library-folders")
 
 async function ensureLibraryDir() {
   await fs.mkdir(libraryDir, { recursive: true })
@@ -295,7 +306,7 @@ interface Project {
   updatedAt: number
 }
 
-const projectsDir = path.join(app.getPath("userData"), "projects")
+let projectsDir = path.join(projectsDataDir, "projects")
 
 async function ensureProjectsDir() {
   await fs.mkdir(projectsDir, { recursive: true })
@@ -305,6 +316,85 @@ async function ensureProjectsDir() {
 // single-file operations — no index file to keep in sync (mirrors library folders).
 function projectPath(id: string) {
   return path.join(projectsDir, `${id}.json`)
+}
+
+interface AppSettings {
+  schemaVersion: 1
+  /** Overrides `projectsDataDir`; absent means the default location under `userData`. */
+  projectsDataDir?: string
+}
+
+const appSettingsPath = path.join(app.getPath("userData"), "app-settings.json")
+
+async function readAppSettings(): Promise<AppSettings> {
+  try {
+    const raw = await fs.readFile(appSettingsPath, "utf8")
+    const parsed = JSON.parse(raw) as AppSettings
+    return { schemaVersion: 1, projectsDataDir: parsed.projectsDataDir }
+  } catch {
+    return { schemaVersion: 1 }
+  }
+}
+
+async function writeAppSettings(settings: AppSettings) {
+  await fs.writeFile(appSettingsPath, JSON.stringify(settings, null, 2), "utf8")
+}
+
+/** Loads a persisted custom `projectsDataDir` (if any) and recomputes `projectsDir`/`libraryDir` from it — called once at startup, before any project/library IPC handler can run. */
+async function applyStoredProjectsDataDir() {
+  const settings = await readAppSettings()
+  if (!settings.projectsDataDir) return
+  projectsDataDir = settings.projectsDataDir
+  projectsDir = path.join(projectsDataDir, "projects")
+  libraryDir = path.join(projectsDataDir, "library-folders")
+}
+
+/** Moves every `.json` file from `fromDir` into `toDir` (creating `toDir` first); a no-op if they're already the same directory. Falls back to copy+delete when `fs.rename` can't cross a filesystem/volume boundary. */
+async function moveDirContents(fromDir: string, toDir: string) {
+  await fs.mkdir(toDir, { recursive: true })
+  if (path.resolve(fromDir) === path.resolve(toDir)) return
+
+  let entries: string[]
+  try {
+    entries = await fs.readdir(fromDir)
+  } catch {
+    return // `fromDir` never existed (e.g. nothing saved yet) — nothing to migrate.
+  }
+
+  for (const entry of entries) {
+    if (!entry.endsWith(".json")) continue
+    const from = path.join(fromDir, entry)
+    const to = path.join(toDir, entry)
+    try {
+      await fs.rename(from, to)
+    } catch {
+      await fs.copyFile(from, to)
+      await fs.rm(from)
+    }
+  }
+}
+
+/**
+ * Relocates where projects (and their folders/slides) are stored: moves the
+ * existing content from the current `projectsDir`/`libraryDir` into the new
+ * location, updates the in-memory paths, and persists the choice (or clears
+ * it, when moving back to the default) so it survives a restart.
+ */
+async function changeProjectsDataDir(nextDataDir: string) {
+  const nextProjectsDir = path.join(nextDataDir, "projects")
+  const nextLibraryDir = path.join(nextDataDir, "library-folders")
+
+  await moveDirContents(projectsDir, nextProjectsDir)
+  await moveDirContents(libraryDir, nextLibraryDir)
+
+  projectsDataDir = nextDataDir
+  projectsDir = nextProjectsDir
+  libraryDir = nextLibraryDir
+
+  await writeAppSettings({
+    schemaVersion: 1,
+    projectsDataDir: nextDataDir === defaultProjectsDataDir ? undefined : nextDataDir,
+  })
 }
 
 function registerProjectHandlers() {
@@ -336,6 +426,53 @@ function registerProjectHandlers() {
 
   ipcMain.handle("project:remove", async (_event, id: string) => {
     await fs.rm(projectPath(id), { force: true })
+  })
+
+  // Lets a project file be opened from anywhere on disk, not just this
+  // app's own managed `projectsDir` — the dialog does the browsing, this
+  // just reads whatever the user picked. Parsing/validation happens in the
+  // renderer (see `parseProjectFile`), same split as every other IPC read here.
+  ipcMain.handle("project:openFileDialog", async () => {
+    const dialogOptions: Electron.OpenDialogOptions = {
+      properties: ["openFile"],
+      filters: [{ name: "BibleTime Project", extensions: ["json"] }],
+    }
+    const win = BrowserWindow.getFocusedWindow()
+    const result = win
+      ? await dialog.showOpenDialog(win, dialogOptions)
+      : await dialog.showOpenDialog(dialogOptions)
+    if (result.canceled || !result.filePaths[0]) return null
+    return fs.readFile(result.filePaths[0], "utf8")
+  })
+
+  ipcMain.handle("project-settings:get", () => ({
+    path: projectsDataDir,
+    isDefault: projectsDataDir === defaultProjectsDataDir,
+  }))
+
+  // Lets the user relocate where projects (and their folders/slides) are
+  // stored to anywhere on disk, e.g. a synced or backed-up folder — a
+  // dedicated subfolder is created there (rather than scattering files
+  // directly into whatever folder they picked), and everything already
+  // saved is moved into it (see `changeProjectsDataDir`).
+  ipcMain.handle("project-settings:choose", async () => {
+    const dialogOptions: Electron.OpenDialogOptions = {
+      properties: ["openDirectory", "createDirectory"],
+    }
+    const win = BrowserWindow.getFocusedWindow()
+    const result = win
+      ? await dialog.showOpenDialog(win, dialogOptions)
+      : await dialog.showOpenDialog(dialogOptions)
+    if (result.canceled || !result.filePaths[0]) return null
+
+    const nextDataDir = path.join(result.filePaths[0], "BibleTime Projects")
+    await changeProjectsDataDir(nextDataDir)
+    return { path: projectsDataDir, isDefault: false }
+  })
+
+  ipcMain.handle("project-settings:resetToDefault", async () => {
+    await changeProjectsDataDir(defaultProjectsDataDir)
+    return { path: projectsDataDir, isDefault: true }
   })
 }
 
@@ -369,6 +506,7 @@ function createWindow() {
         overrideBrowserWindowOptions: {
           width: 1280,
           height: 720,
+          frame: false,
           autoHideMenuBar: true,
           backgroundColor: "#000000",
           webPreferences: {
@@ -387,7 +525,9 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await applyStoredProjectsDataDir()
+
   registerAppInfoHandlers()
   registerTemplateHandlers()
   registerTemplateMediaHandlers()

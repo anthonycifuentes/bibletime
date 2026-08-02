@@ -1,8 +1,18 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
-import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
+import {
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
 import type { DragEndEvent } from "@dnd-kit/core"
-import { arrayMove, rectSortingStrategy, SortableContext } from "@dnd-kit/sortable"
+import {
+  arrayMove,
+  rectSortingStrategy,
+  SortableContext,
+} from "@dnd-kit/sortable"
 
 import type { Folder } from "@/modules/library/interfaces"
 import type { SavedTemplate } from "@/modules/templates"
@@ -19,7 +29,12 @@ import {
 } from "@workspace/ui/components/empty"
 import { Input } from "@workspace/ui/components/input"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Add01Icon, Delete02Icon, Folder01Icon, Layers01Icon } from "@hugeicons/core-free-icons"
+import {
+  Add01Icon,
+  Delete02Icon,
+  Folder01Icon,
+  Layers01Icon,
+} from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
 interface SlideConsoleProps {
@@ -31,6 +46,7 @@ interface SlideConsoleProps {
   templates: SavedTemplate[]
   selectedItemIds: Set<string>
   onSelectItem: (itemId: string, additive: boolean) => void
+  onPresentItem: (itemId: string) => void
   onSelectAll: (itemIds: string[]) => void
   onClearSelection: () => void
   onReorder: (itemIds: string[]) => void
@@ -52,6 +68,7 @@ export function SlideConsole({
   templates,
   selectedItemIds,
   onSelectItem,
+  onPresentItem,
   onSelectAll,
   onClearSelection,
   onReorder,
@@ -62,7 +79,9 @@ export function SlideConsole({
   const [pickerOpen, setPickerOpen] = useState(false)
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+  )
 
   const submitNewFolder = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -80,7 +99,9 @@ export function SlideConsole({
     const newIndex = folder.items.findIndex((item) => item.id === over.id)
     if (oldIndex === -1 || newIndex === -1) return
 
-    onReorder(arrayMove(folder.items, oldIndex, newIndex).map((item) => item.id))
+    onReorder(
+      arrayMove(folder.items, oldIndex, newIndex).map((item) => item.id)
+    )
   }
 
   if (!folder) {
@@ -93,7 +114,9 @@ export function SlideConsole({
                 <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />
               </EmptyMedia>
               <EmptyTitle>{t("library.startProjectTitle")}</EmptyTitle>
-              <EmptyDescription>{t("library.startProjectDescription")}</EmptyDescription>
+              <EmptyDescription>
+                {t("library.startProjectDescription")}
+              </EmptyDescription>
             </EmptyHeader>
             {canWrite ? (
               <EmptyContent>
@@ -154,7 +177,12 @@ export function SlideConsole({
             {t("library.selectAll")}
           </Button>
           {hasSelection ? (
-            <Button type="button" variant="ghost" size="sm" onClick={onClearSelection}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onClearSelection}
+            >
               {t("library.clearSelection")}
             </Button>
           ) : null}
@@ -182,15 +210,21 @@ export function SlideConsole({
       </div>
 
       {folder.items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("library.emptyFolder")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("library.emptyFolder")}
+        </p>
       ) : (
         <div className="@container overflow-y-auto">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
             <SortableContext
               items={folder.items.map((item) => item.id)}
               strategy={rectSortingStrategy}
             >
-              <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @3xl:grid-cols-3 @4xl:grid-cols-4 @5xl:grid-cols-5">
                 {folder.items.map((item) => (
                   <SlideCard
                     key={item.id}
@@ -198,6 +232,8 @@ export function SlideConsole({
                     isSelected={selectedItemIds.has(item.id)}
                     templates={templates}
                     onSelect={onSelectItem}
+                    onPresent={onPresentItem}
+                    onDelete={(itemId) => onRemove([itemId])}
                   />
                 ))}
               </div>
@@ -209,7 +245,9 @@ export function SlideConsole({
       <TemplatePickerDialog
         open={pickerOpen}
         onOpenChange={setPickerOpen}
-        onApply={(templateId) => onApplyTemplate([...selectedItemIds], templateId)}
+        onApply={(templateId) =>
+          onApplyTemplate([...selectedItemIds], templateId)
+        }
       />
     </div>
   )

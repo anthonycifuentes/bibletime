@@ -14,6 +14,8 @@ import {
 } from "@/modules/bible"
 import type { BibleVersionSummary } from "@/modules/bible"
 import type { BiblePassageItemData } from "@/modules/library/interfaces"
+import { splitVerseText } from "@/modules/library/lib/split-verse-text"
+import { setLiveSlide } from "@/modules/library/services"
 import { VersionListPanel } from "@/modules/library/components/version-list-panel"
 import { SlideFrame } from "@/modules/presentation"
 import { useTemplates } from "@/modules/templates"
@@ -31,13 +33,19 @@ import { useTranslation } from "@/modules/core/i18n"
 const DEFAULT_BOOK_USFM = "GEN"
 
 interface BiblePickerPanelProps {
-  /** Whether a Library folder is currently open — "Convert to slide" is disabled (with a hint) when it isn't. */
+  /** Whether a Library folder is currently open — "Present" and "Split into slides" are disabled (with a hint) when it isn't. "Convert to slide" no longer needs one — it creates a folder to hold the slide instead. */
   hasOpenFolder: boolean
   onAddVerse: (
     item: BiblePassageItemData,
     templateId: string | undefined
   ) => void
+  onAddVerses: (
+    items: BiblePassageItemData[],
+    templateId: string | undefined
+  ) => void
 }
+
+const SPLIT_COUNT_OPTIONS = [2, 3, 4, 5]
 
 /**
  * The bottom drawer's Bible tab: five columns — Version, Book, Chapter,
@@ -50,6 +58,7 @@ interface BiblePickerPanelProps {
 export function BiblePickerPanel({
   hasOpenFolder,
   onAddVerse,
+  onAddVerses,
 }: BiblePickerPanelProps) {
   const { t } = useTranslation()
 
@@ -62,6 +71,7 @@ export function BiblePickerPanel({
   const [selectedTemplateId, setSelectedTemplateId] = useState<
     string | undefined
   >(undefined)
+  const [splitCount, setSplitCount] = useState(SPLIT_COUNT_OPTIONS[0])
 
   const { data: catalogVersions } = useGetBibleVersions()
   const { canDownload, downloadingIds, errorIds, download, remove } =
@@ -114,43 +124,127 @@ export function BiblePickerPanel({
     setPendingVerseNumber(undefined)
   }
 
-  const pendingText =
-    chapterData && pendingVerseNumber !== undefined
-      ? findVerseText(chapterData.chapter.items, pendingVerseNumber)
-      : undefined
-  const pendingReference =
-    chapterData && pendingVerseNumber !== undefined
-      ? `${chapterData.chapter.current.human}:${pendingVerseNumber}`
-      : undefined
+  /** The reference/text a given verse number would resolve to in the currently loaded chapter, without touching any state. */
+  const resolveVerseContent = (verseNumber: number) => ({
+    text: chapterData
+      ? findVerseText(chapterData.chapter.items, verseNumber)
+      : undefined,
+    reference: chapterData
+      ? `${chapterData.chapter.current.human}:${verseNumber}`
+      : undefined,
+  })
 
-  const canConvert =
-    hasOpenFolder && Boolean(pendingText) && Boolean(pendingReference)
+  const pendingContent =
+    pendingVerseNumber !== undefined
+      ? resolveVerseContent(pendingVerseNumber)
+      : undefined
+  const pendingText = pendingContent?.text
+  const pendingReference = pendingContent?.reference
+
+  /** Convert to Slide only needs a valid pending verse — with no folder open it creates one instead of requiring one. */
+  const hasPendingVerse = Boolean(pendingText) && Boolean(pendingReference)
+  /** Present and Split into slides still require an open folder — they present/append immediately, with nowhere to fall back to. */
+  const canPresentOrSplit = hasOpenFolder && hasPendingVerse
+
+  /** Adds a verse to the open folder as a slide — the shared step behind "Convert to Slide", "Present", and double-click. */
+  const convertVerse = (
+    verseNumber: number,
+    text: string,
+    reference: string
+  ) => {
+    onAddVerse(
+      {
+        bookUsfm,
+        chapterUsfm: effectiveChapterUsfm,
+        verseNumber,
+        versionId,
+        versionAbbreviation: selectedVersion?.local_abbreviation,
+        reference,
+        text,
+      },
+      effectiveTemplateId
+    )
+  }
+
+  /** Sends a verse straight to the presentation output — the shared step behind "Present" and double-click. */
+  const presentVerse = (text: string, reference: string) => {
+    setLiveSlide({
+      text,
+      reference,
+      versionLabel: selectedVersion?.local_abbreviation,
+      template: effectiveTemplate,
+    })
+    window.open("/present", "bibletime-present")
+  }
 
   const handleConvert = () => {
     if (
-      !canConvert ||
+      !hasPendingVerse ||
       !pendingText ||
       !pendingReference ||
       pendingVerseNumber === undefined
     )
       return
 
-    onAddVerse(
-      {
+    convertVerse(pendingVerseNumber, pendingText, pendingReference)
+    setPendingVerseNumber(undefined)
+  }
+
+  const handlePresent = () => {
+    if (
+      !canPresentOrSplit ||
+      !pendingText ||
+      !pendingReference ||
+      pendingVerseNumber === undefined
+    )
+      return
+
+    convertVerse(pendingVerseNumber, pendingText, pendingReference)
+    presentVerse(pendingText, pendingReference)
+    setPendingVerseNumber(undefined)
+  }
+
+  /** Splits the pending verse's text into `splitCount` slides instead of one — for a verse long enough that even auto-fit would look cramped. */
+  const handleSplit = () => {
+    if (
+      !canPresentOrSplit ||
+      !pendingText ||
+      !pendingReference ||
+      pendingVerseNumber === undefined
+    )
+      return
+
+    const chunks = splitVerseText(pendingText, splitCount)
+    if (chunks.length <= 1) return
+
+    onAddVerses(
+      chunks.map((chunk, index) => ({
         bookUsfm,
         chapterUsfm: effectiveChapterUsfm,
         verseNumber: pendingVerseNumber,
         versionId,
-        reference: pendingReference,
-        text: pendingText,
-      },
+        versionAbbreviation: selectedVersion?.local_abbreviation,
+        reference: `${pendingReference} (${index + 1}/${chunks.length})`,
+        text: chunk,
+      })),
       effectiveTemplateId
     )
     setPendingVerseNumber(undefined)
   }
 
+  /** Converts and immediately presents a verse double-clicked directly in the reader's list, without waiting on `pendingVerseNumber` state. */
+  const handleDoubleClickVerse = (verseNumber: number) => {
+    if (!hasOpenFolder) return
+    const { text, reference } = resolveVerseContent(verseNumber)
+    if (!text || !reference) return
+
+    setPendingVerseNumber(verseNumber)
+    convertVerse(verseNumber, text, reference)
+    presentVerse(text, reference)
+  }
+
   return (
-    <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-[minmax(180px,220px)_minmax(160px,200px)_88px_1fr_minmax(220px,260px)]">
+    <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-[minmax(180px,220px)_minmax(160px,200px)_56px_1fr_minmax(220px,260px)]">
       <div className="flex min-h-0 flex-col gap-2 overflow-hidden">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase">
           {t("bible.version")}
@@ -209,6 +303,7 @@ export function BiblePickerPanel({
                 items={chapterData.chapter.items}
                 selectedVerseNumber={pendingVerseNumber}
                 onSelectVerse={setPendingVerseNumber}
+                onDoubleClickVerse={handleDoubleClickVerse}
               />
             </div>
           </>
@@ -247,6 +342,7 @@ export function BiblePickerPanel({
             template={effectiveTemplate}
             text={pendingText}
             reference={pendingReference}
+            versionLabel={selectedVersion?.local_abbreviation}
             emptyMessage={t("library.selectVerseHint")}
             frameClassName="h-full w-full"
           />
@@ -258,9 +354,58 @@ export function BiblePickerPanel({
           </p>
         ) : null}
 
-        <Button type="button" disabled={!canConvert} onClick={handleConvert}>
-          {t("library.convertToSlide")}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            disabled={!hasPendingVerse}
+            onClick={handleConvert}
+          >
+            {t("library.convertToSlide")}
+          </Button>
+          <Button
+            type="button"
+            className="flex-1"
+            disabled={!canPresentOrSplit}
+            onClick={handlePresent}
+          >
+            {t("library.present")}
+          </Button>
+        </div>
+
+        <div className="flex gap-2">
+          <Select
+            items={SPLIT_COUNT_OPTIONS.map((count) => ({
+              value: String(count),
+              label: t("library.splitCountOption", { count }),
+            }))}
+            value={String(splitCount)}
+            onValueChange={(value) => {
+              if (value) setSplitCount(Number(value))
+            }}
+          >
+            <SelectTrigger className="w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SPLIT_COUNT_OPTIONS.map((count) => (
+                <SelectItem key={count} value={String(count)}>
+                  {t("library.splitCountOption", { count })}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            disabled={!canPresentOrSplit}
+            onClick={handleSplit}
+          >
+            {t("library.splitIntoSlides")}
+          </Button>
+        </div>
       </div>
     </div>
   )

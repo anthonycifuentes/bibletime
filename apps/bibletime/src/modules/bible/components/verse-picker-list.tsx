@@ -9,6 +9,8 @@ interface VersePickerListProps {
   selectedVerseNumber?: number
   /** Called with a verse's number when its row is clicked. */
   onSelectVerse: (verseNumber: number) => void
+  /** Called with a verse's number when its row is double-clicked — converts and immediately presents it. */
+  onDoubleClickVerse?: (verseNumber: number) => void
 }
 
 /**
@@ -20,6 +22,7 @@ export function VersePickerList({
   items,
   selectedVerseNumber,
   onSelectVerse,
+  onDoubleClickVerse,
 }: VersePickerListProps) {
   const selectedRef = useRef<HTMLButtonElement | null>(null)
 
@@ -75,6 +78,7 @@ export function VersePickerList({
                   type="button"
                   ref={isSelected ? selectedRef : undefined}
                   onClick={() => onSelectVerse(verseNumber)}
+                  onDoubleClick={() => onDoubleClickVerse?.(verseNumber)}
                   aria-pressed={isSelected}
                   className={cn(
                     "w-full scroll-mt-4 rounded-md px-2 py-1 text-left transition-colors hover:bg-accent",

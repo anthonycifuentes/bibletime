@@ -39,6 +39,16 @@ declare global {
         list: () => Promise<Project[]>
         save: (project: Project) => Promise<void>
         remove: (id: string) => Promise<void>
+        /** Shows a native "Open" file dialog and returns the selected file's contents, or `null` if canceled. */
+        openFileDialog: () => Promise<string | null>
+      }
+      projectSettings: {
+        /** The current on-disk location projects (and their folders/slides) are stored, and whether it's still the app's default. */
+        get: () => Promise<{ path: string; isDefault: boolean }>
+        /** Shows a native folder picker; on selection, moves everything into a dedicated subfolder there and returns the new location, or `null` if canceled. */
+        choose: () => Promise<{ path: string; isDefault: boolean } | null>
+        /** Moves everything back to the app's default managed location. */
+        resetToDefault: () => Promise<{ path: string; isDefault: boolean }>
       }
     }
   }

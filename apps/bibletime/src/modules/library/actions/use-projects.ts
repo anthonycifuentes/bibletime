@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react"
 
-import type { Project } from "@/modules/library/interfaces"
+import type { Folder, Project } from "@/modules/library/interfaces"
 import { getLibraryStorage, getProjectStorage } from "@/modules/library/services"
+import { downloadProjectFile, parseProjectFile } from "@/modules/library/services/project-file"
 
 const ACTIVE_ID_STORAGE_KEY = "bibletime.activeProjectId"
 
-const createId = (): string => `project-${Math.random().toString(36).slice(2, 10)}`
+const createId = (prefix: string): string => `${prefix}-${Math.random().toString(36).slice(2, 10)}`
 
 const isBrowser = typeof window !== "undefined"
 
@@ -26,7 +27,7 @@ const ensureMigratedProjects = async (): Promise<Project[]> => {
   if (projects.length > 0 || orphanFolders.length === 0) return projects
 
   const now = Date.now()
-  const defaultProject: Project = { id: createId(), name: "My Project", createdAt: now, updatedAt: now }
+  const defaultProject: Project = { id: createId("project"), name: "My Project", createdAt: now, updatedAt: now }
   await projectStorage.save(defaultProject)
 
   await Promise.all(
@@ -71,7 +72,7 @@ export const useProjects = () => {
   const create = useCallback(
     async (name: string) => {
       const now = Date.now()
-      const project: Project = { id: createId(), name, createdAt: now, updatedAt: now }
+      const project: Project = { id: createId("project"), name, createdAt: now, updatedAt: now }
       await projectStorage.save(project)
       await refresh()
       setActive(project.id)
@@ -107,6 +108,57 @@ export const useProjects = () => {
     [activeId, refresh, setActive]
   )
 
+  /** Bundles a project and its folders/slides into one downloadable JSON file — the counterpart to `openProjectFile`. */
+  const exportProject = useCallback(
+    async (id: string) => {
+      const project = projects.find((candidate) => candidate.id === id)
+      if (!project) return
+
+      // Reads directly from storage rather than `useLibrary`'s `folders` —
+      // that hook only ever loads the *active* project's folders, and the
+      // project being exported may not be the active one.
+      const allFolders = await libraryStorage.list()
+      const folders = allFolders.filter((folder) => folder.projectId === id)
+      downloadProjectFile(project, folders)
+    },
+    [projects]
+  )
+
+  /**
+   * Creates a brand-new project from a previously-exported project file's
+   * contents — a fresh id for the project and for every one of its folders
+   * and items, so opening the same file twice (or into an app that already
+   * has data) never collides with anything that already exists. Throws if
+   * `contents` isn't a valid project file (see `parseProjectFile`), leaving
+   * the caller to surface that error — no project is created in that case.
+   */
+  const openProjectFile = useCallback(
+    async (contents: string) => {
+      const file = parseProjectFile(contents)
+
+      const now = Date.now()
+      const project: Project = { id: createId("project"), name: file.project.name, createdAt: now, updatedAt: now }
+      await projectStorage.save(project)
+
+      const idMap = new Map(file.folders.map((folder) => [folder.id, createId("folder")]))
+      const newFolders: Folder[] = file.folders.map((folder) => ({
+        ...folder,
+        id: idMap.get(folder.id)!,
+        projectId: project.id,
+        parentId: folder.parentId ? (idMap.get(folder.parentId) ?? null) : null,
+        items: folder.items.map((item) => ({ ...item, id: createId("item") })),
+        createdAt: now,
+        updatedAt: now,
+      }))
+      await Promise.all(newFolders.map((folder) => libraryStorage.save(folder)))
+
+      await refresh()
+      setActive(project.id)
+      return project
+    },
+    [refresh, setActive]
+  )
+
   return {
     projects,
     isLoading,
@@ -117,6 +169,8 @@ export const useProjects = () => {
     create,
     rename,
     remove,
+    exportProject,
+    openProjectFile,
     refresh,
   }
 }

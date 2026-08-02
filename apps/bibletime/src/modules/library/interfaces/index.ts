@@ -6,6 +6,8 @@ export interface BiblePassageItemData {
   chapterUsfm: string
   verseNumber: number
   versionId?: number
+  /** The version's abbreviation at add-time, e.g. "RV1960" — captured alongside `versionId` so the slide can show it without re-resolving the version. */
+  versionAbbreviation?: string
   /** Human-readable label, e.g. "Génesis 1:1". */
   reference: string
   text: string
@@ -47,6 +49,10 @@ export type FolderItem =
 export interface Folder {
   id: string
   projectId: string
+  /** The containing folder's id, or `null` for a root-level folder — nesting is capped at 3 levels total. Missing on folders saved before nesting existed, which are treated as root-level. */
+  parentId?: string | null
+  /** Sort order among sibling folders sharing the same `parentId` within this project. Missing on folders saved before manual reordering existed, which fall back to their storage-list order. */
+  position?: number
   name: string
   items: FolderItem[]
   createdAt: number
@@ -85,6 +91,19 @@ export interface ProjectStorageDriver {
 }
 
 /**
+ * The on-disk/exported JSON shape for a single project file: the project's
+ * name plus every one of its folders (including nested subfolders and
+ * slides). `id`/`createdAt`/`updatedAt` are deliberately omitted from the
+ * project itself — a fresh identity is assigned whenever a file is opened,
+ * same as any other create flow.
+ */
+export interface ProjectFile {
+  schemaVersion: 1
+  project: { name: string }
+  folders: Folder[]
+}
+
+/**
  * A fully-resolved slide, ready to render or broadcast to `/present` —
  * denormalized from whatever `FolderItem` produced it so `/present` never
  * needs to know about folders, items, or content types.
@@ -92,5 +111,6 @@ export interface ProjectStorageDriver {
 export interface LiveSlidePayload {
   text?: string
   reference?: string
+  versionLabel?: string
   template: SlideTemplate
 }

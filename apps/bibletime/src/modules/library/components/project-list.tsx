@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import type { FormEvent } from "react"
 
 import type { Project } from "@/modules/library/interfaces"
@@ -23,10 +23,12 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Add01Icon,
   Delete02Icon,
+  Download03Icon,
   Edit02Icon,
   Folder01Icon,
   Folder02Icon,
   MoreVerticalIcon,
+  Upload01Icon,
 } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
@@ -38,6 +40,9 @@ interface ProjectListProps {
   onCreateProject: (name: string) => void
   onRenameProject: (projectId: string, name: string) => void
   onDeleteProject: (projectId: string) => void
+  onExportProject: (projectId: string) => void
+  /** Reads a previously-exported project file's contents and creates a new project from it — throws on invalid input. */
+  onOpenProjectFile: (contents: string) => Promise<unknown>
 }
 
 /**
@@ -55,6 +60,8 @@ export function ProjectList({
   onCreateProject,
   onRenameProject,
   onDeleteProject,
+  onExportProject,
+  onOpenProjectFile,
 }: ProjectListProps) {
   const { t } = useTranslation()
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -62,8 +69,34 @@ export function ProjectList({
   const [creating, setCreating] = useState(false)
   const [newProjectName, setNewProjectName] = useState("")
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const pendingDeleteProject = projects.find((project) => project.id === pendingDeleteId)
+
+  const handleOpenContents = async (contents: string) => {
+    try {
+      await onOpenProjectFile(contents)
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : t("library.openProjectError"))
+    }
+  }
+
+  const handleOpenClick = async () => {
+    // Desktop: a native "Open" file dialog, not limited to any one folder on
+    // disk. Web: browsers have no filesystem access, so fall back to a
+    // standard file input — same split `TemplateLibraryToolbar` already uses.
+    if (window.bibletime?.project.openFileDialog) {
+      const contents = await window.bibletime.project.openFileDialog()
+      if (contents) await handleOpenContents(contents)
+      return
+    }
+    fileInputRef.current?.click()
+  }
+
+  const handleFileInputChange = async (file: File | undefined) => {
+    if (!file) return
+    await handleOpenContents(await file.text())
+  }
 
   const startRename = (project: Project) => {
     setRenamingId(project.id)
@@ -90,15 +123,23 @@ export function ProjectList({
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase">{t("nav.projects")}</h2>
         {canWrite ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setCreating((prev) => !prev)}
-          >
-            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
-            <span className="sr-only">{t("library.newProject")}</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => void handleOpenClick()}>
+              <HugeiconsIcon icon={Upload01Icon} strokeWidth={2} />
+              {t("library.openProject")}
+            </Button>
+            <Button type="button" size="sm" onClick={() => setCreating((prev) => !prev)}>
+              <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
+              {t("library.newProject")}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={(event) => void handleFileInputChange(event.target.files?.[0])}
+            />
+          </div>
         ) : null}
       </div>
 
@@ -161,6 +202,10 @@ export function ProjectList({
                     <DropdownMenuItem onClick={() => startRename(project)}>
                       <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
                       {t("library.renameProject")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onExportProject(project.id)}>
+                      <HugeiconsIcon icon={Download03Icon} strokeWidth={2} />
+                      {t("library.exportProject")}
                     </DropdownMenuItem>
                     <DropdownMenuItem variant="destructive" onClick={() => setPendingDeleteId(project.id)}>
                       <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />

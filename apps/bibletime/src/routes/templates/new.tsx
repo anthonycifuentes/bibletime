@@ -25,7 +25,12 @@ function NewTemplateRoute() {
     hasCreated.current = true
 
     void create(t("templates.new")).then((saved) => {
-      void navigate({ to: "/templates/$templateId", params: { templateId: saved.id }, replace: true })
+      void navigate({
+        to: "/templates/$templateId",
+        params: { templateId: saved.id },
+        search: { isNew: true },
+        replace: true,
+      })
     })
   }, [create, navigate, t])
 

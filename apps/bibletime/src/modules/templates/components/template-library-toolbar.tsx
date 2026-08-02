@@ -4,7 +4,7 @@ import { useRef } from "react"
 import type { useTemplates } from "@/modules/templates/actions/use-templates"
 import { Button } from "@workspace/ui/components/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { PlusSignIcon, Upload01Icon } from "@hugeicons/core-free-icons"
+import { Upload01Icon } from "@hugeicons/core-free-icons"
 
 interface TemplateLibraryToolbarProps {
   canWrite: boolean
@@ -18,7 +18,7 @@ interface TemplateLibraryToolbarProps {
  * import behavior stays in one place regardless of where it's triggered
  * from. "Nueva" just navigates; `/templates/new` does the actual creating.
  */
-export function TemplateLibraryToolbar({ canWrite, importTemplate, size = "sm" }: TemplateLibraryToolbarProps) {
+export function TemplateLibraryToolbar({ canWrite, importTemplate, size = "default" }: TemplateLibraryToolbarProps) {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -40,14 +40,8 @@ export function TemplateLibraryToolbar({ canWrite, importTemplate, size = "sm" }
   }
 
   return (
-    <div className="flex gap-2">
-      <Button
-        type="button"
-        variant="secondary"
-        size={size}
-        onClick={() => void navigate({ to: "/templates/new" })}
-      >
-        <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
+    <div className="flex justify-end gap-2">
+      <Button type="button" size={size} onClick={() => void navigate({ to: "/templates/new" })}>
         Nueva
       </Button>
       <Button type="button" variant="outline" size={size} onClick={() => fileInputRef.current?.click()}>

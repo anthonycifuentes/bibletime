@@ -1,16 +1,17 @@
-import { useState } from "react"
-
 import { useConsoleStore } from "@/modules/library/actions/use-console-store"
 import { useLibrary } from "@/modules/library/actions/use-library"
 import { useProjects } from "@/modules/library/actions/use-projects"
 import { BottomDrawer } from "@/modules/library/components/bottom-drawer"
-import type { BottomTab } from "@/modules/library/components/bottom-drawer"
 import { FolderTree } from "@/modules/library/components/folder-tree"
 import { PreviewPanel } from "@/modules/library/components/preview-panel"
 import { ProjectLauncher } from "@/modules/library/components/project-launcher"
 import { SlideConsole } from "@/modules/library/components/slide-console"
+import { getDescendantIds } from "@/modules/library/lib/build-folder-tree"
+import { resolveFolderItemContent } from "@/modules/library/lib/resolve-folder-item-content"
+import { setLiveSlide } from "@/modules/library/services"
 import { useTemplates } from "@/modules/templates"
 import { HeaderBar } from "@/modules/core/layout"
+import { useTranslation } from "@/modules/core/i18n"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -27,10 +28,12 @@ import {
  * passed down, so every pane reads and mutates the same in-memory data.
  */
 export function ConsoleView() {
+  const { t } = useTranslation()
   const projects = useProjects()
   const library = useLibrary(projects.activeId ?? null)
   const templatesState = useTemplates()
-  const [bottomTab, setBottomTab] = useState<BottomTab>("projects")
+  const bottomTab = useConsoleStore((state) => state.bottomTab)
+  const setBottomTab = useConsoleStore((state) => state.setBottomTab)
 
   const openFolderId = useConsoleStore((state) => state.openFolderId)
   const selectedItemIds = useConsoleStore((state) => state.selectedItemIds)
@@ -49,6 +52,45 @@ export function ConsoleView() {
     (item) => item.id === lastSelectedItemId
   )
 
+  /** Resolves a slide from whichever folder it's actually in (not necessarily the open one — a sidebar-tree slide's folder may not be) and sends it to the presentation output. */
+  const presentFolderItem = (folderId: string, itemId: string) => {
+    const targetFolder = library.folders.find(
+      (candidate) => candidate.id === folderId
+    )
+    const item = targetFolder?.items.find(
+      (folderItem) => folderItem.id === itemId
+    )
+    if (!item) return
+
+    const content = resolveFolderItemContent(item, templatesState.templates)
+    setLiveSlide({
+      text: content.text,
+      reference: content.reference,
+      versionLabel: content.versionLabel,
+      template: content.template,
+    })
+    window.open("/present", "bibletime-present")
+  }
+
+  /** Selects a slide card (marks it "ready to present" in the preview panel) and immediately sends it to the presentation output — the console grid's double-click shortcut. */
+  const onPresentItem = (itemId: string) => {
+    selectItem(itemId, { additive: false })
+    if (openFolderId) presentFolderItem(openFolderId, itemId)
+  }
+
+  /** Marks a sidebar-tree slide "ready to present" — opens its folder (so the console/preview panel reflect it) and selects it, without presenting. */
+  const onPrepareTreeItem = (itemId: string, folderId: string) => {
+    openFolder(folderId)
+    selectItem(itemId, { additive: false })
+  }
+
+  /** Same as `onPrepareTreeItem`, but immediately presents too — the sidebar tree's double-click shortcut. */
+  const onPresentTreeItem = (itemId: string, folderId: string) => {
+    openFolder(folderId)
+    selectItem(itemId, { additive: false })
+    presentFolderItem(folderId, itemId)
+  }
+
   if (!projects.isLoading && projects.projects.length === 0) {
     return (
       <div className="flex h-svh flex-col">
@@ -59,6 +101,7 @@ export function ConsoleView() {
             canWrite={projects.canWrite}
             onCreateProject={(name) => void projects.create(name)}
             onSwitchProject={projects.setActive}
+            onOpenProjectFile={projects.openProjectFile}
           />
         </div>
       </div>
@@ -78,16 +121,31 @@ export function ConsoleView() {
                 openFolderId={openFolderId}
                 canWrite={library.canWrite}
                 onOpenFolder={openFolder}
-                onCreateFolder={(name) => void library.createFolder(name)}
+                onCreateFolder={(name, parentId) =>
+                  void library.createFolder(name, parentId)
+                }
                 onRenameFolder={(folderId, name) =>
                   void library.renameFolder(folderId, name)
                 }
                 onDeleteFolder={(folderId) => {
-                  if (folderId === openFolderId) openFolder(null)
+                  const removedIds = new Set([
+                    folderId,
+                    ...getDescendantIds(library.folders, folderId),
+                  ])
+                  if (openFolderId && removedIds.has(openFolderId))
+                    openFolder(null)
                   void library.deleteFolder(folderId)
                 }}
+                onApplyFolderTree={(tree) => void library.applyFolderTree(tree)}
+                onPrepareItem={onPrepareTreeItem}
+                onPresentItem={onPresentTreeItem}
+                onDeleteItem={(itemId, folderId) =>
+                  void library.removeFolderItems(folderId, [itemId])
+                }
                 activeProjectName={
-                  projects.projects.find((project) => project.id === projects.activeId)?.name
+                  projects.projects.find(
+                    (project) => project.id === projects.activeId
+                  )?.name
                 }
               />
             </aside>
@@ -103,6 +161,7 @@ export function ConsoleView() {
                 onSelectItem={(itemId, additive) =>
                   selectItem(itemId, { additive })
                 }
+                onPresentItem={onPresentItem}
                 onSelectAll={selectAll}
                 onClearSelection={clearSelection}
                 onReorder={(itemIds) => {
@@ -135,7 +194,7 @@ export function ConsoleView() {
 
         <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize="320px" minSize="160px" maxSize="70%">
+        <ResizablePanel defaultSize="420px" minSize="42px" maxSize="100%">
           <BottomDrawer
             activeTab={bottomTab}
             onTabChange={setBottomTab}
@@ -144,22 +203,54 @@ export function ConsoleView() {
             canWriteProjects={projects.canWrite}
             onSwitchProject={projects.setActive}
             onCreateProject={(name) => void projects.create(name)}
-            onRenameProject={(projectId, name) => void projects.rename(projectId, name)}
+            onRenameProject={(projectId, name) =>
+              void projects.rename(projectId, name)
+            }
             onDeleteProject={(projectId) => {
-              if (projectId === projects.activeId && openFolderId) openFolder(null)
+              if (projectId === projects.activeId && openFolderId)
+                openFolder(null)
               void (async () => {
                 await library.deleteFoldersInProject(projectId)
                 await projects.remove(projectId)
               })()
             }}
+            onExportProject={(projectId) => void projects.exportProject(projectId)}
+            onOpenProjectFile={projects.openProjectFile}
             openFolderId={openFolderId}
             onAddVerse={(data, templateId) => {
-              if (openFolderId)
+              if (openFolderId) {
                 void library.addItemToFolder(openFolderId, {
                   type: "bible-passage",
                   templateId,
                   data,
                 })
+                return
+              }
+
+              // No folder open: create one at the start of the root list,
+              // with the converted verse as its first item in the same
+              // write (see `createFolder`'s `initialItems`), so the item
+              // always has a folder to live in.
+              void (async () => {
+                const folder = await library.createFolder(
+                  t("library.newFolder"),
+                  null,
+                  "start",
+                  [{ type: "bible-passage", templateId, data }]
+                )
+                if (folder) openFolder(folder.id)
+              })()
+            }}
+            onAddVerses={(items, templateId) => {
+              if (openFolderId)
+                void library.addItemsToFolder(
+                  openFolderId,
+                  items.map((data) => ({
+                    type: "bible-passage",
+                    templateId,
+                    data,
+                  }))
+                )
             }}
           />
         </ResizablePanel>

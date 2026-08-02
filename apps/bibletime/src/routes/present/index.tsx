@@ -27,6 +27,7 @@ function PresentRoute() {
         template={slide?.template ?? DEFAULT_SLIDE_TEMPLATE}
         text={slide?.text}
         reference={slide?.reference}
+        versionLabel={slide?.versionLabel}
         emptyMessage="Esperando contenido…"
         className="rounded-none"
         frameClassName="h-full w-full"

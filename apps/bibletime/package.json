@@ -46,6 +46,7 @@
     "@types/three": "^0.185.3",
     "@vitejs/plugin-react": "^6",
     "eslint": "^9",
+    "nitro": "npm:nitro-nightly@3.0.1-20260731-205209-52abde8a",
     "tsx": "^4.20.6",
     "typescript": "^6",
     "vite": "^8"

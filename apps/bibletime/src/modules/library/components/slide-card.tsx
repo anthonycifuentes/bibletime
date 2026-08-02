@@ -6,9 +6,15 @@ import { resolveFolderItemContent } from "@/modules/library/lib/resolve-folder-i
 import type { SavedTemplate } from "@/modules/templates"
 import { useAspectRatio } from "@/modules/core/aspect-ratio"
 import { SlidePreview, useElementWidthScale } from "@/modules/presentation"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@workspace/ui/components/context-menu"
 import { cn } from "@workspace/ui/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { GripVerticalIcon } from "@hugeicons/core-free-icons"
+import { Delete02Icon, GripVerticalIcon, PlayIcon, Tick02Icon } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
 // A real `border`, not a `ring` box-shadow: an outset ring gets clipped by
@@ -26,14 +32,21 @@ interface SlideCardProps {
   isSelected: boolean
   templates: SavedTemplate[]
   onSelect: (itemId: string, additive: boolean) => void
+  /** Called when the card is double-clicked — presents this slide immediately. */
+  onPresent: (itemId: string) => void
+  /** Called from the card's context menu — removes this one slide. */
+  onDelete: (itemId: string) => void
 }
 
 /**
  * One card in the slide console's grid — the live preview only. Reordering
  * is drag-and-drop via the floating handle above the card (the only drag
- * trigger — the card body itself stays click-to-select).
+ * trigger — the card body itself stays click-to-select, double-click-to-present).
+ * Right-click (or long-press) opens a context menu with the same
+ * prepare/present actions plus delete — the same three options offered for
+ * a slide in the sidebar tree.
  */
-export function SlideCard({ item, isSelected, templates, onSelect }: SlideCardProps) {
+export function SlideCard({ item, isSelected, templates, onSelect, onPresent, onDelete }: SlideCardProps) {
   const { t } = useTranslation()
   const { ratio } = useAspectRatio()
   const { elementRef, scale } = useElementWidthScale()
@@ -58,38 +71,56 @@ export function SlideCard({ item, isSelected, templates, onSelect }: SlideCardPr
         <span className="sr-only">{t("library.dragToReorder")}</span>
       </button>
 
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={(event) => onSelect(item.id, event.metaKey || event.ctrlKey || event.shiftKey)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault()
-            onSelect(item.id, event.metaKey || event.ctrlKey || event.shiftKey)
-          }
-        }}
-        className={cn(
-          "cursor-pointer overflow-hidden rounded-3xl border-2 transition-colors",
-          isSelected ? SELECTED_BORDER : "border-transparent hover:border-ring/50"
-        )}
-      >
-        <div style={{ aspectRatio: ratio }} ref={elementRef}>
-          <SlidePreview
-            template={content.template}
-            text={content.text}
-            reference={content.reference}
-            emptyMessage={content.emptyMessage}
-            scale={scale}
-            className="h-full w-full rounded-none px-6 py-6"
-          />
-        </div>
+      <ContextMenu>
+        <ContextMenuTrigger
+          role="button"
+          tabIndex={0}
+          onClick={(event) => onSelect(item.id, event.metaKey || event.ctrlKey || event.shiftKey)}
+          onDoubleClick={() => onPresent(item.id)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault()
+              onSelect(item.id, event.metaKey || event.ctrlKey || event.shiftKey)
+            }
+          }}
+          className={cn(
+            "cursor-pointer overflow-hidden rounded-3xl border-2 transition-colors",
+            isSelected ? SELECTED_BORDER : "border-transparent hover:border-ring/50"
+          )}
+        >
+          <div style={{ aspectRatio: ratio }} ref={elementRef}>
+            <SlidePreview
+              template={content.template}
+              text={content.text}
+              reference={content.reference}
+              versionLabel={content.versionLabel}
+              emptyMessage={content.emptyMessage}
+              scale={scale}
+              className="h-full w-full rounded-none px-6 py-6"
+            />
+          </div>
 
-        <div className="bg-card px-3 py-2">
-          <p className="truncate text-sm font-medium text-foreground">
-            {content.reference || " "}
-          </p>
-        </div>
-      </div>
+          <div className="bg-card px-3 py-2">
+            <p className="truncate text-sm font-medium text-foreground">
+              {content.reference || " "}
+            </p>
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={() => onSelect(item.id, false)}>
+            <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
+            {t("library.prepareSlide")}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onPresent(item.id)}>
+            <HugeiconsIcon icon={PlayIcon} strokeWidth={2} />
+            {t("library.present")}
+          </ContextMenuItem>
+          <ContextMenuItem variant="destructive" onClick={() => onDelete(item.id)}>
+            <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+            {t("library.deleteSlide")}
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     </div>
   )
 }

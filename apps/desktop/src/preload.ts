@@ -27,5 +27,13 @@ contextBridge.exposeInMainWorld("bibletime", {
     list: () => ipcRenderer.invoke("project:list"),
     save: (project: unknown) => ipcRenderer.invoke("project:save", project),
     remove: (id: string) => ipcRenderer.invoke("project:remove", id),
+    openFileDialog: () => ipcRenderer.invoke("project:openFileDialog") as Promise<string | null>,
+  },
+  projectSettings: {
+    get: () => ipcRenderer.invoke("project-settings:get") as Promise<{ path: string; isDefault: boolean }>,
+    choose: () =>
+      ipcRenderer.invoke("project-settings:choose") as Promise<{ path: string; isDefault: boolean } | null>,
+    resetToDefault: () =>
+      ipcRenderer.invoke("project-settings:resetToDefault") as Promise<{ path: string; isDefault: boolean }>,
   },
 })

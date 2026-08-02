@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import type { FormEvent } from "react"
 
 import type { Project } from "@/modules/library/interfaces"
@@ -13,7 +13,14 @@ import {
 } from "@workspace/ui/components/empty"
 import { Input } from "@workspace/ui/components/input"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Add01Icon, Folder01Icon, FolderCodeIcon, GlobeIcon, LaptopIcon } from "@hugeicons/core-free-icons"
+import {
+  Add01Icon,
+  Folder01Icon,
+  FolderCodeIcon,
+  GlobeIcon,
+  LaptopIcon,
+  Upload01Icon,
+} from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
 interface ProjectLauncherProps {
@@ -21,6 +28,8 @@ interface ProjectLauncherProps {
   canWrite: boolean
   onCreateProject: (name: string) => void
   onSwitchProject: (projectId: string) => void
+  /** Reads a previously-exported project file's contents and creates a new project from it — throws on invalid input. */
+  onOpenProjectFile: (contents: string) => Promise<unknown>
 }
 
 // Mirrors `SystemInfoPanel`'s desktop/web detection: the Electron preload
@@ -35,10 +44,17 @@ const RECENT_PROJECTS_LIMIT = 5
  * back to a recent project stays one click away without losing whatever's
  * currently open.
  */
-export function ProjectLauncher({ projects, canWrite, onCreateProject, onSwitchProject }: ProjectLauncherProps) {
+export function ProjectLauncher({
+  projects,
+  canWrite,
+  onCreateProject,
+  onSwitchProject,
+  onOpenProjectFile,
+}: ProjectLauncherProps) {
   const { t } = useTranslation()
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState("")
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const recentProjects = [...projects]
     .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -50,6 +66,23 @@ export function ProjectLauncher({ projects, canWrite, onCreateProject, onSwitchP
     if (trimmed) onCreateProject(trimmed)
     setName("")
     setCreating(false)
+  }
+
+  const handleOpenContents = async (contents: string) => {
+    try {
+      await onOpenProjectFile(contents)
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : t("library.openProjectError"))
+    }
+  }
+
+  const handleOpenClick = async () => {
+    if (window.bibletime?.project.openFileDialog) {
+      const contents = await window.bibletime.project.openFileDialog()
+      if (contents) await handleOpenContents(contents)
+      return
+    }
+    fileInputRef.current?.click()
   }
 
   return (
@@ -87,10 +120,26 @@ export function ProjectLauncher({ projects, canWrite, onCreateProject, onSwitchP
                 />
               </form>
             ) : (
-              <Button type="button" onClick={() => setCreating(true)}>
-                <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
-                {t("library.newProject")}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" onClick={() => setCreating(true)}>
+                  <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
+                  {t("library.newProject")}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => void handleOpenClick()}>
+                  <HugeiconsIcon icon={Upload01Icon} strokeWidth={2} />
+                  {t("library.openProject")}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (file) void file.text().then(handleOpenContents)
+                  }}
+                />
+              </div>
             )}
           </EmptyContent>
         ) : null}

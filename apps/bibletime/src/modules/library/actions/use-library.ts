@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from "react"
 
 import type { Folder, FolderItem } from "@/modules/library/interfaces"
+import { getDescendantIds } from "@/modules/library/lib/build-folder-tree"
+import type { FolderTreeNodeData } from "@/modules/library/lib/build-folder-tree"
 import { getLibraryStorage } from "@/modules/library/services"
+import type { TreeNodeNested } from "@workspace/ui/components/tree-view"
+import { flattenTree } from "@workspace/ui/lib/tree-utils"
 
 const createId = (prefix: string): string => `${prefix}-${Math.random().toString(36).slice(2, 10)}`
 
@@ -44,14 +48,33 @@ export const useLibrary = (activeProjectId: string | null) => {
   const folders = allFolders.filter((folder) => folder.projectId === activeProjectId)
 
   const createFolder = useCallback(
-    async (name: string) => {
+    async (
+      name: string,
+      parentId: string | null = null,
+      insertAt: "end" | "start" = "end",
+      initialItems: Omit<FolderItem, "id">[] = []
+    ) => {
       if (!activeProjectId) return undefined
+
+      const siblings = allFolders.filter(
+        (folder) => folder.projectId === activeProjectId && (folder.parentId ?? null) === parentId
+      )
+
+      const position =
+        insertAt === "start"
+          ? Math.min(0, ...siblings.map((folder) => folder.position ?? 0)) - 1
+          : siblings.length
 
       const folder: Folder = {
         id: createId("folder"),
         projectId: activeProjectId,
+        parentId,
+        position,
         name,
-        items: [],
+        // Any initial items are included in this same write — adding them via
+        // `addItemToFolder` right after would race against this folder not
+        // existing yet in the `allFolders` snapshot that call closed over.
+        items: initialItems.map((item) => ({ ...item, id: createId("item") }) as FolderItem),
         createdAt: Date.now(),
         updatedAt: Date.now(),
       }
@@ -59,7 +82,7 @@ export const useLibrary = (activeProjectId: string | null) => {
       await refresh()
       return folder
     },
-    [activeProjectId, refresh]
+    [activeProjectId, allFolders, refresh]
   )
 
   const renameFolder = useCallback(
@@ -72,12 +95,79 @@ export const useLibrary = (activeProjectId: string | null) => {
     [allFolders, refresh]
   )
 
+  /** Deletes a folder and its entire subtree (subfolders at every depth, and their slides) — matches the no-confirmation behavior a folder with no subfolders already has. */
   const deleteFolder = useCallback(
     async (folderId: string) => {
-      await storage.remove(folderId)
+      const idsToRemove = [folderId, ...getDescendantIds(allFolders, folderId)]
+      await Promise.all(idsToRemove.map((id) => storage.remove(id)))
       await refresh()
     },
-    [refresh]
+    [allFolders, refresh]
+  )
+
+  /**
+   * Persists the result of a folder-tree drag-and-drop: `TreeView`'s
+   * `onItemsChange` hands back the *entire* reordered/reparented nested
+   * tree (folders and their slides both, per `FolderTreeNodeData`), not a
+   * targeted delta — trying to reverse-engineer "what one thing moved"
+   * would be more code than just trusting the snapshot. Flattens it (via
+   * the library's own `flattenTree`), regroups each folder's new siblings
+   * by kind to derive per-folder `position` (folders and items are
+   * counted separately, since they're stored as separate concepts —
+   * `parentId`/`position` vs. a folder's own `items` array) and each
+   * folder's new `items` order, then saves only the folders whose
+   * `parentId`/`position`/`items` actually changed.
+   */
+  const applyFolderTree = useCallback(
+    async (tree: TreeNodeNested<FolderTreeNodeData>[]) => {
+      const flat = flattenTree(tree)
+
+      const positionCounters = new Map<string, number>()
+      const folderPositions = new Map<string, { parentId: string | null; position: number }>()
+      const itemsByFolderId = new Map<string, FolderItem[]>()
+
+      for (const node of flat) {
+        const key = `${node.parentId ?? "root"}:${node.data.kind}`
+        const position = positionCounters.get(key) ?? 0
+        positionCounters.set(key, position + 1)
+
+        if (node.data.kind === "folder") {
+          folderPositions.set(node.data.folder.id, { parentId: node.parentId, position })
+        } else if (node.parentId) {
+          const items = itemsByFolderId.get(node.parentId) ?? []
+          items.push(node.data.item)
+          itemsByFolderId.set(node.parentId, items)
+        }
+      }
+
+      const now = Date.now()
+      const updates: Folder[] = []
+      for (const folder of allFolders) {
+        const nextPosition = folderPositions.get(folder.id)
+        if (!nextPosition) continue
+
+        const nextItems = itemsByFolderId.get(folder.id) ?? []
+        const changed =
+          (folder.parentId ?? null) !== nextPosition.parentId ||
+          (folder.position ?? -1) !== nextPosition.position ||
+          nextItems.length !== folder.items.length ||
+          nextItems.some((item, index) => item.id !== folder.items[index]?.id)
+
+        if (!changed) continue
+        updates.push({
+          ...folder,
+          parentId: nextPosition.parentId,
+          position: nextPosition.position,
+          items: nextItems,
+          updatedAt: now,
+        })
+      }
+
+      if (updates.length === 0) return
+      await Promise.all(updates.map((folder) => storage.save(folder)))
+      await refresh()
+    },
+    [allFolders, refresh]
   )
 
   /** Deletes every folder belonging to a project — used when a project itself is deleted, which may not be the active one. */
@@ -97,6 +187,19 @@ export const useLibrary = (activeProjectId: string | null) => {
 
       const newItem = { ...item, id: createId("item") } as FolderItem
       await storage.save({ ...existing, items: [...existing.items, newItem], updatedAt: Date.now() })
+      await refresh()
+    },
+    [allFolders, refresh]
+  )
+
+  /** Same as `addItemToFolder`, but appends every item in one `storage.save` — e.g. a verse split into several slides, which should land as one atomic write instead of N sequential ones. */
+  const addItemsToFolder = useCallback(
+    async (folderId: string, items: Omit<FolderItem, "id">[]) => {
+      const existing = allFolders.find((folder) => folder.id === folderId)
+      if (!existing || items.length === 0) return
+
+      const newItems = items.map((item) => ({ ...item, id: createId("item") }) as FolderItem)
+      await storage.save({ ...existing, items: [...existing.items, ...newItems], updatedAt: Date.now() })
       await refresh()
     },
     [allFolders, refresh]
@@ -155,8 +258,10 @@ export const useLibrary = (activeProjectId: string | null) => {
     createFolder,
     renameFolder,
     deleteFolder,
+    applyFolderTree,
     deleteFoldersInProject,
     addItemToFolder,
+    addItemsToFolder,
     removeFolderItems,
     reorderFolderItems,
     applyTemplateToItems,

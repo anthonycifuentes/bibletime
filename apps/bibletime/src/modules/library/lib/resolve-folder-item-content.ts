@@ -6,6 +6,7 @@ import type { FolderItem } from "@/modules/library/interfaces"
 export interface ResolvedFolderItemContent {
   text?: string
   reference?: string
+  versionLabel?: string
   template: SlideTemplate
   /** Shown instead of `text` when this item's content type has no real data yet (`song`/`media` today). */
   emptyMessage?: string
@@ -20,7 +21,12 @@ export const resolveFolderItemContent = (
 
   switch (item.type) {
     case "bible-passage":
-      return { text: item.data.text, reference: item.data.reference, template }
+      return {
+        text: item.data.text,
+        reference: item.data.reference,
+        versionLabel: item.data.versionAbbreviation,
+        template,
+      }
     case "song":
       return { template, emptyMessage: `${item.data.title} — contenido de canciones próximamente.` }
     case "media":
