@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react"
 
-import { normalizeText } from "@/modules/bible"
 import type { BibleVersionCatalogEntry, BibleVersionSummary } from "@/modules/bible"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { cn } from "@workspace/ui/lib/utils"
 import { useTranslation } from "@/modules/core/i18n"
+import { normalizeText } from "@/modules/core/lib"
 import type { Locale, TranslationKey } from "@/modules/core/i18n"
 
 interface VersionListPanelProps {

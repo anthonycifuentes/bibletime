@@ -42,6 +42,11 @@ const folderItemLabel = (item: FolderItem): string => {
     case "bible-passage":
       return item.data.reference
     case "song":
+      // The section's label ("Verse 1", "Chorus") — a song's slides all
+      // share one title, so the title alone wouldn't tell them apart here.
+      return item.data.sectionLabel
+    case "note":
+      return item.data.label
     case "media":
       return item.data.title
   }
@@ -64,6 +69,8 @@ interface FolderTreeProps {
   onDeleteItem: (itemId: string, folderId: string) => void
   /** Plain display name of the active project — switching/creating/deleting projects lives in the Projects tab, not here. */
   activeProjectName: string | undefined
+  /** Files dropped from the Media tab's grid onto a folder row — appended to that folder, open or not. */
+  onDropMediaOnFolder?: (folderId: string) => void
 }
 
 /**
@@ -93,6 +100,7 @@ export function FolderTree({
   onPresentItem,
   onDeleteItem,
   activeProjectName,
+  onDropMediaOnFolder,
 }: FolderTreeProps) {
   const { t } = useTranslation()
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -274,6 +282,17 @@ export function FolderTree({
       isActiveInConsole && "bg-accent"
     )
 
+    const mediaDropProps = onDropMediaOnFolder
+      ? {
+          onDragOver: (event: React.DragEvent) => event.preventDefault(),
+          onDrop: (event: React.DragEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onDropMediaOnFolder(folder.id)
+          },
+        }
+      : {}
+
     const rowContent = (
       <>
         {grip}
@@ -313,7 +332,7 @@ export function FolderTree({
 
     if (!canWrite) {
       return (
-        <div style={{ paddingLeft: depth * 20 }} className={rowClassName}>
+        <div style={{ paddingLeft: depth * 20 }} className={rowClassName} {...mediaDropProps}>
           {rowContent}
         </div>
       )
@@ -321,7 +340,11 @@ export function FolderTree({
 
     return (
       <ContextMenu>
-        <ContextMenuTrigger style={{ paddingLeft: depth * 20 }} className={rowClassName}>
+        <ContextMenuTrigger
+          style={{ paddingLeft: depth * 20 }}
+          className={rowClassName}
+          {...mediaDropProps}
+        >
           {rowContent}
         </ContextMenuTrigger>
         <ContextMenuContent>

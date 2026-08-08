@@ -6,9 +6,11 @@ import { FolderTree } from "@/modules/library/components/folder-tree"
 import { PreviewPanel } from "@/modules/library/components/preview-panel"
 import { ProjectLauncher } from "@/modules/library/components/project-launcher"
 import { SlideConsole } from "@/modules/library/components/slide-console"
-import { getDescendantIds } from "@/modules/library/lib/build-folder-tree"
+import { getDescendantIds, getFolderDepth } from "@/modules/library/lib/build-folder-tree"
 import { resolveFolderItemContent } from "@/modules/library/lib/resolve-folder-item-content"
+import type { MediaSlideData } from "@/modules/media"
 import { setLiveSlide } from "@/modules/library/services"
+import { readMediaDragPayload } from "@/modules/media"
 import { useTemplates } from "@/modules/templates"
 import { HeaderBar } from "@/modules/core/layout"
 import { useTranslation } from "@/modules/core/i18n"
@@ -18,13 +20,16 @@ import {
   ResizablePanelGroup,
 } from "@workspace/ui/components/resizable"
 
+/** A folder is nestable up to this many levels below root (0 = root, so 0/1/2 is 3 levels total) — mirrors `FolderTree`'s own cap. */
+const MAX_FOLDER_DEPTH = 2
+
 /**
  * The app's one console shell: a persistent header, a sidebar that always
  * shows the Library (the currently open folder's tree) no matter what else
  * is going on, an always-open-folder-driven slide console, a persistent
  * preview panel, and a bottom drawer whose own tab strip (Library, Bible,
- * Songs, Media, Templates) switches a content-source browser independently
- * of the sidebar. `useLibrary`/`useTemplates` are each called once here and
+ * Songs, Notes, Media, Templates) switches a content-source browser
+ * independently of the sidebar. `useLibrary`/`useTemplates` are each called once here and
  * passed down, so every pane reads and mutates the same in-memory data.
  */
 export function ConsoleView() {
@@ -91,6 +96,50 @@ export function ConsoleView() {
     presentFolderItem(folderId, itemId)
   }
 
+  /**
+   * Appends media slides to a folder, creating one at the root when there
+   * is none — shared by the Media tab's Add action and by dropping files
+   * onto the slide console or the folder tree.
+   */
+  const addMediaSlides = (
+    slides: MediaSlideData[],
+    templateId: string | undefined,
+    targetFolderId: string | null
+  ) => {
+    if (slides.length === 0) return
+    const items = slides.map((data) => ({ type: "media" as const, templateId, data }))
+
+    if (targetFolderId) {
+      void library.addItemsToFolder(targetFolderId, items)
+      return
+    }
+
+    void (async () => {
+      const folder = await library.createFolder(t("library.newFolder"), null, "start", items)
+      if (folder) openFolder(folder.id)
+    })()
+  }
+
+  /** Accepts a drag from the Media tab's grid onto a folder (or the open one). */
+  const onDropMediaOnFolder = (folderId: string | null) => {
+    const slides = readMediaDragPayload()
+    addMediaSlides(slides, templatesState.activeId, folderId)
+  }
+
+  /**
+   * Where a generated folder (a song's, a deck's, a media selection's) gets
+   * created: under the open folder when there is one, at the root when
+   * there isn't — and as a *sibling* of the open folder when nesting inside
+   * it would exceed the tree's 3-level cap, so content is never rejected
+   * for being added while a deep folder is open.
+   */
+  const generatedFolderParentId = (): string | null => {
+    if (!openFolderId) return null
+    return getFolderDepth(library.folders, openFolderId) < MAX_FOLDER_DEPTH
+      ? openFolderId
+      : (openedFolder?.parentId ?? null)
+  }
+
   if (!projects.isLoading && projects.projects.length === 0) {
     return (
       <div className="flex h-svh flex-col">
@@ -142,6 +191,7 @@ export function ConsoleView() {
                 onDeleteItem={(itemId, folderId) =>
                   void library.removeFolderItems(folderId, [itemId])
                 }
+                onDropMediaOnFolder={onDropMediaOnFolder}
                 activeProjectName={
                   projects.projects.find(
                     (project) => project.id === projects.activeId
@@ -172,6 +222,11 @@ export function ConsoleView() {
                   if (openFolderId)
                     void library.removeFolderItems(openFolderId, itemIds)
                 }}
+                onRenameItem={(itemId, label) => {
+                  if (openFolderId)
+                    void library.renameFolderItem(openFolderId, itemId, label)
+                }}
+                onDropMedia={() => onDropMediaOnFolder(openFolderId)}
                 onApplyTemplate={(itemIds, templateId) => {
                   if (openFolderId)
                     void library.applyTemplateToItems(
@@ -214,7 +269,8 @@ export function ConsoleView() {
                 await projects.remove(projectId)
               })()
             }}
-            onExportProject={(projectId) => void projects.exportProject(projectId)}
+            onSaveProject={projects.saveProject}
+            onSaveProjectAs={projects.saveProjectAs}
             onOpenProjectFile={projects.openProjectFile}
             openFolderId={openFolderId}
             onAddVerse={(data, templateId) => {
@@ -251,6 +307,95 @@ export function ConsoleView() {
                     data,
                   }))
                 )
+            }}
+            onAddSong={(title, slides, templateId) => {
+              // A song becomes a folder: the folder and every one of its
+              // slides land in a single write (see `createFolder`'s
+              // `initialItems`), then it's opened so the user immediately
+              // sees the slides they just created.
+              void (async () => {
+                const folder = await library.createFolder(
+                  title,
+                  generatedFolderParentId(),
+                  "end",
+                  slides.map((data) => ({ type: "song", templateId, data }))
+                )
+                if (folder) openFolder(folder.id)
+              })()
+            }}
+            onAddSongSection={(slide, templateId) => {
+              if (openFolderId)
+                void library.addItemToFolder(openFolderId, {
+                  type: "song",
+                  templateId,
+                  data: slide,
+                })
+            }}
+            onPresentSong={(text, template) => {
+              // No `reference` — a song slide projects its lyrics alone.
+              setLiveSlide({ text, template })
+              window.open("/present", "bibletime-present")
+            }}
+            onAddMedia={(slides, templateId) => addMediaSlides(slides, templateId, openFolderId)}
+            onAddMediaFolder={(name, slides, templateId) => {
+              // A deck (or a multi-file selection) becomes a folder: the
+              // folder and every slide land in a single write, then it's
+              // opened so the user sees the slides they just created.
+              void (async () => {
+                const folder = await library.createFolder(
+                  name,
+                  generatedFolderParentId(),
+                  "end",
+                  slides.map((data) => ({ type: "media", templateId, data }))
+                )
+                if (folder) openFolder(folder.id)
+              })()
+            }}
+            onPresentMedia={(slide, templateId) => {
+              const template =
+                templatesState.templates.find((saved) => saved.id === templateId)?.template ??
+                templatesState.activeTemplate
+              setLiveSlide({ media: slide, template })
+              window.open("/present", "bibletime-present")
+            }}
+            onAddNote={(data, templateId) => {
+              if (openFolderId) {
+                void library.addItemToFolder(openFolderId, {
+                  type: "note",
+                  templateId,
+                  data,
+                })
+                return
+              }
+
+              // Same fallback a converted verse takes: with nothing open,
+              // create a folder at the start of the root list holding this
+              // slide, so the note always has somewhere to live.
+              void (async () => {
+                const folder = await library.createFolder(t("library.newFolder"), null, "start", [
+                  { type: "note", templateId, data },
+                ])
+                if (folder) openFolder(folder.id)
+              })()
+            }}
+            onAddNotesAsFolder={(name, slides, templateId) => {
+              // The whole session's notes become one folder in a
+              // single write, then it's opened so the user sees them.
+              void (async () => {
+                const folder = await library.createFolder(
+                  name,
+                  generatedFolderParentId(),
+                  "end",
+                  slides.map((data) => ({ type: "note", templateId, data }))
+                )
+                if (folder) openFolder(folder.id)
+              })()
+            }}
+            onPresentNote={(text, heading, template) => {
+              // Unlike a song, an note keeps its heading on the
+              // projected slide — it's the line that says what this is.
+              setLiveSlide({ text, reference: heading, template })
+              window.open("/present", "bibletime-present")
             }}
           />
         </ResizablePanel>

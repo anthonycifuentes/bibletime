@@ -205,6 +205,37 @@ export const useLibrary = (activeProjectId: string | null) => {
     [allFolders, refresh]
   )
 
+  /**
+   * Renames a song slide's label — the caption shown on its console card and
+   * in the sidebar tree ("Verse 1" → "Pre-chorus"). Edits the folder item's
+   * own copy, not the source song, so relabelling one service's running
+   * order never reaches back into the repertoire or any other folder that
+   * uses the same song.
+   *
+   * Only `song` items have a caption the user owns: a verse's is its
+   * reference and a media slide's is its filename, both derived from real
+   * content rather than chosen.
+   */
+  const renameFolderItem = useCallback(
+    async (folderId: string, itemId: string, label: string) => {
+      const existing = allFolders.find((folder) => folder.id === folderId)
+      if (!existing) return
+
+      const trimmed = label.trim()
+      if (trimmed === "") return
+
+      const items = existing.items.map((item) =>
+        item.id === itemId && item.type === "song"
+          ? { ...item, data: { ...item.data, sectionLabel: trimmed } }
+          : item
+      )
+
+      await storage.save({ ...existing, items, updatedAt: Date.now() })
+      await refresh()
+    },
+    [allFolders, refresh]
+  )
+
   const removeFolderItems = useCallback(
     async (folderId: string, itemIds: string[]) => {
       const existing = allFolders.find((folder) => folder.id === folderId)
@@ -262,6 +293,7 @@ export const useLibrary = (activeProjectId: string | null) => {
     deleteFoldersInProject,
     addItemToFolder,
     addItemsToFolder,
+    renameFolderItem,
     removeFolderItems,
     reorderFolderItems,
     applyTemplateToItems,

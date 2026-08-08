@@ -17,15 +17,28 @@ const slugify = (value: string): string =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "proyecto"
 
+/**
+ * The exact bytes of a project file, for either platform to write however it
+ * writes files — a browser download here, a native `fs.writeFile` over IPC on
+ * desktop. Both go through this one function so "a file saved on desktop and
+ * one downloaded on web are byte-identical" is structural rather than a thing
+ * to remember.
+ */
+export const serializeProjectFile = (project: Project, folders: Folder[]): string =>
+  JSON.stringify(toProjectFile(project, folders), null, 2)
+
+/** The default filename for a project file — shared by the web download and the desktop save dialog. */
+export const projectFileName = (project: Project): string =>
+  `${slugify(project.name)}.bibletime-project.json`
+
 /** Triggers a browser download of the project (and its folders/slides) as a `.json` file. */
 export const downloadProjectFile = (project: Project, folders: Folder[]): void => {
-  const file = toProjectFile(project, folders)
-  const blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" })
+  const blob = new Blob([serializeProjectFile(project, folders)], { type: "application/json" })
   const url = URL.createObjectURL(blob)
 
   const link = document.createElement("a")
   link.href = url
-  link.download = `${slugify(project.name)}.bibletime-project.json`
+  link.download = projectFileName(project)
   link.click()
 
   URL.revokeObjectURL(url)

@@ -1,6 +1,6 @@
 # BibleTime
 
-A minimalist, local-first presentation app for churches and ministries. BibleTime displays Bible verses, sermon slides, song lyrics, announcements, images, and videos on a projector or external screen, with a simple control interface for the operator.
+A minimalist, local-first presentation app for churches and ministries. BibleTime displays Bible verses, sermon slides, song lyrics, notes, images, and videos on a projector or external screen, with a simple control interface for the operator.
 
 It ships as:
 
@@ -14,7 +14,7 @@ Both share the same core codebase and UI. For this phase, everything is local-fi
 BibleTime sits between two existing approaches, aiming to take the best of both:
 
 - **ProPresenter** — the industry standard for church presentation. Powerful (multi-output, stage displays, live triggers, media handling) but heavy, expensive, and more complex than most small churches or youth groups need.
-- **Wiswords** — free, web-based, and very easy to use, focused on projecting Bible verses in Spanish. Simple onboarding, but it requires an account and an internet connection, and is scoped mainly to Scripture projection rather than full-service presentation (songs, sermons, announcements, media).
+- **Wiswords** — free, web-based, and very easy to use, focused on projecting Bible verses in Spanish. Simple onboarding, but it requires an account and an internet connection, and is scoped mainly to Scripture projection rather than full-service presentation (songs, sermons, notes, media).
 
 BibleTime's niche: ProPresenter's breadth of content types, Wiswords' simplicity, and full offline/local operation. No server, no login screen, no subscription — just open the app and start building today's service.
 
@@ -51,9 +51,9 @@ BibleTime's niche: ProPresenter's breadth of content types, Wiswords' simplicity
 - Reorder, duplicate, and group slides into a sermon deck
 - *(Stretch/Phase 2: import existing PowerPoint/Keynote/PDF decks)*
 
-### Announcements Module
-- Template-based announcement slides (image/background + heading + body text)
-- Loop mode for pre-service announcement rotation
+### Notes Module
+- Template-based note slides (image/background + heading + body text)
+- Loop mode for pre-service note rotation
 
 ### Media Library
 - Local import of images and videos (drag-and-drop)
@@ -61,7 +61,7 @@ BibleTime's niche: ProPresenter's breadth of content types, Wiswords' simplicity
 - Videos and images can be sent directly to output, or embedded as slide backgrounds
 
 ### Service Plan (Playlist)
-- Build a running order for the service by dragging in items from any module (songs, verses, sermon slides, announcements, media)
+- Build a running order for the service by dragging in items from any module (songs, verses, sermon slides, notes, media)
 - Save/load service plans, duplicate a previous week's plan as a starting point
 
 ### Control Panel & Output

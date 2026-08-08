@@ -20,8 +20,16 @@ export const getLiveSlide = (): LiveSlidePayload | null => {
   }
 }
 
-/** Records a fully-resolved slide as the live output, so any open `/present` window mirrors it. */
+/**
+ * Records a fully-resolved slide as the live output, so any open
+ * `/present` window mirrors it.
+ *
+ * The `sentAt` stamp is what makes re-sending work at all: `localStorage`
+ * fires a `storage` event only when the written value differs from the
+ * stored one, so sending the same slide twice would otherwise never reach
+ * an open output window.
+ */
 export const setLiveSlide = (payload: LiveSlidePayload): void => {
   if (!isBrowser) return
-  window.localStorage.setItem(LIVE_SLIDE_STORAGE_KEY, JSON.stringify(payload))
+  window.localStorage.setItem(LIVE_SLIDE_STORAGE_KEY, JSON.stringify({ ...payload, sentAt: Date.now() }))
 }

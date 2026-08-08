@@ -1,7 +1,7 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { FormEvent } from "react"
 
-import type { Project } from "@/modules/library/interfaces"
+import type { Project, ProjectSaveResult } from "@/modules/library/interfaces"
 import { Button } from "@workspace/ui/components/button"
 import {
   Dialog,
@@ -25,6 +25,7 @@ import {
   Delete02Icon,
   Download03Icon,
   Edit02Icon,
+  FloppyDiskIcon,
   Folder01Icon,
   Folder02Icon,
   MoreVerticalIcon,
@@ -40,10 +41,25 @@ interface ProjectListProps {
   onCreateProject: (name: string) => void
   onRenameProject: (projectId: string, name: string) => void
   onDeleteProject: (projectId: string) => void
-  onExportProject: (projectId: string) => void
+  /** Writes to the file the project is bound to, asking for a location only on a first save. */
+  onSaveProject: (projectId: string) => Promise<ProjectSaveResult>
+  /** Always asks for a location, and rebinds the project to whatever is chosen. */
+  onSaveProjectAs: (projectId: string) => Promise<ProjectSaveResult>
   /** Reads a previously-exported project file's contents and creates a new project from it — throws on invalid input. */
-  onOpenProjectFile: (contents: string) => Promise<unknown>
+  onOpenProjectFile: (contents: string, filePath?: string) => Promise<unknown>
 }
+
+/**
+ * Whether saving can write to a real filesystem. Drives the menu shape: with
+ * a filesystem there are two genuinely different actions (write back vs. pick
+ * a location), while in the browser both collapse into the one download the
+ * "Export" item has always been — so web keeps the single item rather than
+ * showing two that do the same thing.
+ */
+const canSaveToFile = typeof window !== "undefined" && Boolean(window.bibletime?.project.saveToPath)
+
+/** How long a "Saved to …" confirmation stays on screen. */
+const SAVE_STATUS_TIMEOUT_MS = 5_000
 
 /**
  * The bottom drawer's "Projects" tab: this is where projects themselves are
@@ -60,7 +76,8 @@ export function ProjectList({
   onCreateProject,
   onRenameProject,
   onDeleteProject,
-  onExportProject,
+  onSaveProject,
+  onSaveProjectAs,
   onOpenProjectFile,
 }: ProjectListProps) {
   const { t } = useTranslation()
@@ -69,13 +86,22 @@ export function ProjectList({
   const [creating, setCreating] = useState(false)
   const [newProjectName, setNewProjectName] = useState("")
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const pendingDeleteProject = projects.find((project) => project.id === pendingDeleteId)
 
-  const handleOpenContents = async (contents: string) => {
+  // A save confirmation is worth seeing, not worth dismissing — it clears
+  // itself rather than taking a modal or a click to get rid of.
+  useEffect(() => {
+    if (!saveStatus) return
+    const timer = window.setTimeout(() => setSaveStatus(null), SAVE_STATUS_TIMEOUT_MS)
+    return () => window.clearTimeout(timer)
+  }, [saveStatus])
+
+  const handleOpenContents = async (contents: string, filePath?: string) => {
     try {
-      await onOpenProjectFile(contents)
+      await onOpenProjectFile(contents, filePath)
     } catch (error) {
       window.alert(error instanceof Error ? error.message : t("library.openProjectError"))
     }
@@ -86,11 +112,26 @@ export function ProjectList({
     // disk. Web: browsers have no filesystem access, so fall back to a
     // standard file input — same split `TemplateLibraryToolbar` already uses.
     if (window.bibletime?.project.openFileDialog) {
-      const contents = await window.bibletime.project.openFileDialog()
-      if (contents) await handleOpenContents(contents)
+      const opened = await window.bibletime.project.openFileDialog()
+      if (opened) await handleOpenContents(opened.contents, opened.path)
       return
     }
     fileInputRef.current?.click()
+  }
+
+  const handleSave = async (projectId: string, mode: "save" | "saveAs") => {
+    const result = mode === "save" ? await onSaveProject(projectId) : await onSaveProjectAs(projectId)
+
+    if (result.status === "canceled") return
+    if (result.status === "failed") {
+      window.alert(t("library.saveProjectError", { error: result.error }))
+      // A binding that has gone stale (folder deleted, volume unmounted) is
+      // recoverable: say why it failed first, then offer a new location.
+      if (result.retryWithDialog) await handleSave(projectId, "saveAs")
+      return
+    }
+
+    setSaveStatus(result.path ? t("library.projectSavedTo", { path: result.path }) : t("library.projectSaved"))
   }
 
   const handleFileInputChange = async (file: File | undefined) => {
@@ -157,6 +198,8 @@ export function ProjectList({
         </form>
       ) : null}
 
+      {saveStatus ? <p className="truncate text-xs text-muted-foreground">{saveStatus}</p> : null}
+
       {projects.length === 0 && !creating ? (
         <p className="text-sm text-muted-foreground">{t("library.noProjects")}</p>
       ) : null}
@@ -203,10 +246,23 @@ export function ProjectList({
                       <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
                       {t("library.renameProject")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onExportProject(project.id)}>
-                      <HugeiconsIcon icon={Download03Icon} strokeWidth={2} />
-                      {t("library.exportProject")}
-                    </DropdownMenuItem>
+                    {canSaveToFile ? (
+                      <>
+                        <DropdownMenuItem onClick={() => void handleSave(project.id, "save")}>
+                          <HugeiconsIcon icon={FloppyDiskIcon} strokeWidth={2} />
+                          {t("library.saveProject")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void handleSave(project.id, "saveAs")}>
+                          <HugeiconsIcon icon={Download03Icon} strokeWidth={2} />
+                          {t("library.saveProjectAs")}
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <DropdownMenuItem onClick={() => void handleSave(project.id, "save")}>
+                        <HugeiconsIcon icon={Download03Icon} strokeWidth={2} />
+                        {t("library.exportProject")}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem variant="destructive" onClick={() => setPendingDeleteId(project.id)}>
                       <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
                       {t("library.deleteProject")}

@@ -5,6 +5,7 @@ import { LanguagePicker } from "@/modules/settings/components/language-picker"
 import { ThemePicker } from "@/modules/settings/components/theme-picker"
 import { AspectRatioPicker } from "@/modules/settings/components/aspect-ratio-picker"
 import { ProjectStoragePanel } from "@/modules/settings/components/project-storage-panel"
+import { MediaStoragePanel } from "@/modules/settings/components/media-storage-panel"
 import { SystemInfoPanel } from "@/modules/settings/components/system-info-panel"
 import { DonatePanel } from "@/modules/settings/components/donate-panel"
 import { Button } from "@workspace/ui/components/button"
@@ -69,6 +70,16 @@ export function SettingsView() {
         </CardHeader>
         <CardContent>
           <ProjectStoragePanel />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("settings.media.label")}</CardTitle>
+          <CardDescription>{t("settings.media.description")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MediaStoragePanel />
         </CardContent>
       </Card>
 

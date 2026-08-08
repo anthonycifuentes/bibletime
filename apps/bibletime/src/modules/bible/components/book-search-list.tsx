@@ -3,10 +3,10 @@ import type { FormEvent } from "react"
 
 import type { Book } from "@/modules/bible/interfaces"
 import { parseReference } from "@/modules/bible/lib/parse-reference"
-import { normalizeText } from "@/modules/bible/lib/normalize-text"
 import { BookList } from "@/modules/bible/components/book-list"
 import { Input } from "@workspace/ui/components/input"
 import { useTranslation } from "@/modules/core/i18n"
+import { normalizeText } from "@/modules/core/lib"
 
 interface BookSearchListProps {
   books: Book[]

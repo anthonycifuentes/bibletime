@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 
 import type { BibleVersionCatalogEntry, BibleVersionSummary } from "@/modules/bible/interfaces"
-import { normalizeText } from "@/modules/bible/lib/normalize-text"
+import { normalizeText } from "@/modules/core/lib"
 import { Button } from "@workspace/ui/components/button"
 import {
   Dialog,

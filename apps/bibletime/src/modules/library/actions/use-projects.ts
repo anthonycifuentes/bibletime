@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from "react"
 
-import type { Folder, Project } from "@/modules/library/interfaces"
+import type { Folder, Project, ProjectSaveResult } from "@/modules/library/interfaces"
 import { getLibraryStorage, getProjectStorage } from "@/modules/library/services"
-import { downloadProjectFile, parseProjectFile } from "@/modules/library/services/project-file"
+import {
+  downloadProjectFile,
+  parseProjectFile,
+  projectFileName,
+  serializeProjectFile,
+} from "@/modules/library/services/project-file"
 
 const ACTIVE_ID_STORAGE_KEY = "bibletime.activeProjectId"
 
@@ -108,21 +113,85 @@ export const useProjects = () => {
     [activeId, refresh, setActive]
   )
 
-  /** Bundles a project and its folders/slides into one downloadable JSON file — the counterpart to `openProjectFile`. */
-  const exportProject = useCallback(
-    async (id: string) => {
-      const project = projects.find((candidate) => candidate.id === id)
-      if (!project) return
-
-      // Reads directly from storage rather than `useLibrary`'s `folders` —
-      // that hook only ever loads the *active* project's folders, and the
-      // project being exported may not be the active one.
-      const allFolders = await libraryStorage.list()
-      const folders = allFolders.filter((folder) => folder.projectId === id)
-      downloadProjectFile(project, folders)
-    },
-    [projects]
+  /**
+   * A project's own folders, read directly from storage rather than from
+   * `useLibrary`'s `folders` — that hook only ever loads the *active*
+   * project's folders, and the project being saved may not be the active one.
+   */
+  const foldersOf = useCallback(
+    async (projectId: string): Promise<Folder[]> =>
+      (await libraryStorage.list()).filter((folder) => folder.projectId === projectId),
+    []
   )
+
+  /** Records which file a project is now bound to, so the next "Save" needs no dialog. */
+  const bindFilePath = useCallback(
+    async (project: Project, filePath: string) => {
+      await projectStorage.save({ ...project, filePath, updatedAt: Date.now() })
+      await refresh()
+    },
+    [refresh]
+  )
+
+  /**
+   * Writes the project to a location the user picks. On desktop that's a
+   * native save dialog (and the project is bound to whatever they chose); on
+   * web, where there is no filesystem to pick from, it stays the browser
+   * download it has always been.
+   */
+  const saveProjectAs = useCallback(
+    async (id: string): Promise<ProjectSaveResult> => {
+      const project = projects.find((candidate) => candidate.id === id)
+      if (!project) return { status: "failed", error: `Unknown project: ${id}` }
+
+      const folders = await foldersOf(id)
+      const bridge = window.bibletime?.project
+
+      if (!bridge?.saveFileDialog) {
+        downloadProjectFile(project, folders)
+        return { status: "saved" }
+      }
+
+      const result = await bridge.saveFileDialog(
+        // Seeded with the current binding when there is one, so "Save as…"
+        // opens where the file already lives rather than somewhere unrelated.
+        project.filePath ?? projectFileName(project),
+        serializeProjectFile(project, folders)
+      )
+      if (result.canceled) return { status: "canceled" }
+      if (!result.ok) return { status: "failed", error: result.error }
+
+      await bindFilePath(project, result.path)
+      return { status: "saved", path: result.path }
+    },
+    [bindFilePath, foldersOf, projects]
+  )
+
+  /**
+   * Writes the project back to the file it is bound to, with no dialog. Falls
+   * through to `saveProjectAs` when there is no binding yet (a first save), and
+   * reports a stale binding as a recoverable failure — the caller shows the
+   * reason and then offers the dialog, rather than silently reopening it.
+   */
+  const saveProject = useCallback(
+    async (id: string): Promise<ProjectSaveResult> => {
+      const project = projects.find((candidate) => candidate.id === id)
+      if (!project) return { status: "failed", error: `Unknown project: ${id}` }
+
+      const bridge = window.bibletime?.project
+      if (!bridge?.saveToPath || !project.filePath) return saveProjectAs(id)
+
+      const folders = await foldersOf(id)
+      const result = await bridge.saveToPath(project.filePath, serializeProjectFile(project, folders))
+      if (result.ok) return { status: "saved", path: result.path }
+
+      return { status: "failed", error: result.error, retryWithDialog: true }
+    },
+    [foldersOf, projects, saveProjectAs]
+  )
+
+  /** Bundles a project and its folders/slides into one file — the counterpart to `openProjectFile`. Kept as the name the existing "Export" menu item calls, now sharing one save path with it rather than diverging. */
+  const exportProject = useCallback((id: string) => saveProject(id), [saveProject])
 
   /**
    * Creates a brand-new project from a previously-exported project file's
@@ -131,13 +200,24 @@ export const useProjects = () => {
    * has data) never collides with anything that already exists. Throws if
    * `contents` isn't a valid project file (see `parseProjectFile`), leaving
    * the caller to surface that error — no project is created in that case.
+   *
+   * `filePath` (desktop only — the web file picker never sees a path) binds
+   * the new project to the file it came from, so a later "Save" writes back
+   * there. The project is still a *copy* in managed storage: nothing is
+   * written to that file until the user explicitly saves.
    */
   const openProjectFile = useCallback(
-    async (contents: string) => {
+    async (contents: string, filePath?: string) => {
       const file = parseProjectFile(contents)
 
       const now = Date.now()
-      const project: Project = { id: createId("project"), name: file.project.name, createdAt: now, updatedAt: now }
+      const project: Project = {
+        id: createId("project"),
+        name: file.project.name,
+        createdAt: now,
+        updatedAt: now,
+        ...(filePath ? { filePath } : {}),
+      }
       await projectStorage.save(project)
 
       const idMap = new Map(file.folders.map((folder) => [folder.id, createId("folder")]))
@@ -169,6 +249,8 @@ export const useProjects = () => {
     create,
     rename,
     remove,
+    saveProject,
+    saveProjectAs,
     exportProject,
     openProjectFile,
     refresh,

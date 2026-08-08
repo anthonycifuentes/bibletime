@@ -29,7 +29,7 @@ interface ProjectLauncherProps {
   onCreateProject: (name: string) => void
   onSwitchProject: (projectId: string) => void
   /** Reads a previously-exported project file's contents and creates a new project from it — throws on invalid input. */
-  onOpenProjectFile: (contents: string) => Promise<unknown>
+  onOpenProjectFile: (contents: string, filePath?: string) => Promise<unknown>
 }
 
 // Mirrors `SystemInfoPanel`'s desktop/web detection: the Electron preload
@@ -68,9 +68,9 @@ export function ProjectLauncher({
     setCreating(false)
   }
 
-  const handleOpenContents = async (contents: string) => {
+  const handleOpenContents = async (contents: string, filePath?: string) => {
     try {
-      await onOpenProjectFile(contents)
+      await onOpenProjectFile(contents, filePath)
     } catch (error) {
       window.alert(error instanceof Error ? error.message : t("library.openProjectError"))
     }
@@ -78,8 +78,8 @@ export function ProjectLauncher({
 
   const handleOpenClick = async () => {
     if (window.bibletime?.project.openFileDialog) {
-      const contents = await window.bibletime.project.openFileDialog()
-      if (contents) await handleOpenContents(contents)
+      const opened = await window.bibletime.project.openFileDialog()
+      if (opened) await handleOpenContents(opened.contents, opened.path)
       return
     }
     fileInputRef.current?.click()

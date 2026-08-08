@@ -10,7 +10,6 @@ export { VersePickerList } from "@/modules/bible/components/verse-picker-list"
 export { BibleVersionSelector } from "@/modules/bible/components/bible-version-selector"
 
 export { findFirstVerseNumber, findVerseText } from "@/modules/bible/lib/chapter-items"
-export { normalizeText } from "@/modules/bible/lib/normalize-text"
 export { BUNDLED_VERSION_ID } from "@/modules/bible/services"
 
 export type {

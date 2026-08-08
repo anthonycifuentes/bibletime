@@ -52,7 +52,11 @@ interface SlideConsoleProps {
   onClearSelection: () => void
   onReorder: (itemIds: string[]) => void
   onRemove: (itemIds: string[]) => void
+  /** Renames one slide's caption from its context menu — song slides only. */
+  onRenameItem: (itemId: string, label: string) => void
   onApplyTemplate: (itemIds: string[], templateId: string) => void
+  /** Files dropped from the Media tab's grid — appended to this folder. */
+  onDropMedia?: () => void
 }
 
 /**
@@ -74,7 +78,9 @@ export function SlideConsole({
   onClearSelection,
   onReorder,
   onRemove,
+  onRenameItem,
   onApplyTemplate,
+  onDropMedia,
 }: SlideConsoleProps) {
   const { t } = useTranslation()
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -216,7 +222,21 @@ export function SlideConsole({
   }
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-hidden p-4">
+    <div
+      className="flex h-full flex-col gap-3 overflow-hidden p-4"
+      // Plain HTML5 drag events rather than dnd-kit: the drag starts in the
+      // Media tab, a different component tree with no shared dnd context,
+      // and pointer-based dnd-kit can't span the two. The two systems don't
+      // collide — dnd-kit listens to pointer events, this to drag events.
+      onDragOver={(event) => {
+        if (onDropMedia) event.preventDefault()
+      }}
+      onDrop={(event) => {
+        if (!onDropMedia) return
+        event.preventDefault()
+        onDropMedia()
+      }}
+    >
       <div className="flex shrink-0 items-center justify-between gap-2">
         <h1 className="truncate text-lg font-bold">{folder.name}</h1>
         <OverflowActions
@@ -257,6 +277,7 @@ export function SlideConsole({
                     onSelect={onSelectItem}
                     onPresent={onPresentItem}
                     onDelete={(itemId) => onRemove([itemId])}
+                    onRename={onRenameItem}
                   />
                 ))}
               </div>

@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "build:bible-data": "tsx ./scripts/build-bible-data.ts",
+    "verify:media": "tsx ./scripts/verify-media.ts",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit"
@@ -30,6 +31,7 @@
     "axios": "^1.18.1",
     "gsap": "^3.15.0",
     "ogl": "^1.0.11",
+    "pdfjs-dist": "^6.2.108",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "tailwindcss": "^4",
