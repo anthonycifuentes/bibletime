@@ -22,6 +22,15 @@ const devWebUrl = process.env.BIBLETIME_WEB_URL ?? "http://localhost:3000"
 /** Set to the bundled server's address on startup in a packaged app; stays the dev server's otherwise. */
 let resolvedWebUrl = devWebUrl
 
+/**
+ * The console's own route. The site root serves the public landing page —
+ * a page for people deciding whether to download this app, which is not
+ * what someone who already opened it should be looking at.
+ */
+function consoleUrl() {
+  return new URL("/library", resolvedWebUrl).toString()
+}
+
 /** Asks the OS for a free port by binding one and immediately releasing it. */
 async function findFreePort(): Promise<number> {
   const { createServer } = await import("node:net")
@@ -1414,13 +1423,13 @@ function createWindow() {
     height: 800,
     backgroundColor: "#0a0a0a",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
     },
   })
 
-  win.loadURL(resolvedWebUrl)
+  win.loadURL(consoleUrl())
 
   // The "Proyectar" button opens `/present` via `window.open` — give it a
   // window the user can actually place on a second display: movable,
@@ -1460,7 +1469,7 @@ function createWindow() {
         fullscreenable: true,
         backgroundColor: "#000000",
         webPreferences: {
-          preload: path.join(__dirname, "preload.js"),
+          preload: path.join(__dirname, "preload.cjs"),
           contextIsolation: true,
           nodeIntegration: false,
         },

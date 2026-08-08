@@ -1,6 +1,36 @@
+import type { RgbaColor } from "@workspace/ui/lib/color"
+
+export type { RgbaColor }
+
+export type GradientKind = "linear" | "radial"
+
+export interface GradientStop {
+  color: RgbaColor
+  /** Percentage along the gradient, 0–100. */
+  position: number
+}
+
+/**
+ * The editable form of a gradient background. Only the generator writes it;
+ * rendering always goes through the serialized `value` beside it, so a
+ * gradient stays renderable even when nothing can produce a spec for it.
+ */
+export interface GradientSpec {
+  kind: GradientKind
+  /** Degrees, 0–359. Ignored by `radial`, but kept so switching kinds is lossless. */
+  angle: number
+  stops: GradientStop[]
+}
+
 export type SlideBackground =
   | { type: "color"; value: string }
-  | { type: "gradient"; value: string }
+  /**
+   * `value` is the rendered CSS and the only thing consumers read. `spec` is
+   * the structured source it was serialized from — absent on gradients saved
+   * before the generator existed, and on the bundled `oklch()` ones, which
+   * keep rendering from `value` alone.
+   */
+  | { type: "gradient"; value: string; spec?: GradientSpec }
   | { type: "image"; value: string }
   | { type: "video"; value: string }
   | { type: "animated"; presetId: string; params: Record<string, number | string | boolean> }

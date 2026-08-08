@@ -1,19 +1,19 @@
 ## 1. Color model and gradient service
 
-- [ ] 1.1 Add `apps/bibletime/src/modules/presentation/services/gradient.ts` with the `RgbaColor` (`r`/`g`/`b` 0–255, `a` 0–100), `GradientStop` (`color` + `position` 0–100), `GradientKind` (`linear` | `radial`), and `GradientSpec` (`kind`, `angle`, `stops`) types.
-- [ ] 1.2 Add color conversion helpers to `gradient.ts`: `rgbaToHex` / `hexToRgba` (accepting 3-, 6-, and 8-digit hex with optional `#`, returning `null` on anything invalid) and `rgbaToCss`.
-- [ ] 1.3 Implement `toCssGradient(spec)` — stops sorted ascending by position without mutating the input, `linear-gradient(<angle>deg, …)` vs `radial-gradient(circle at 50% 50%, …)`, hex per stop when every stop is opaque and `rgb(r g b / a%)` for any stop with alpha below 100.
-- [ ] 1.4 Implement `parseCssGradient(value)` — narrow support for `linear-gradient(<angle>deg, <hex> [<pos>%], …)`, distributing positions evenly when absent, returning `null` for anything else (including the bundled `oklch()` gradients).
-- [ ] 1.5 Add `DEFAULT_GRADIENT_SPEC`, `interpolateStops(before, after, position)` for track insertion, and `GRADIENT_PRESETS` (six `GradientSpec` entries matching the reference row: teal→green→yellow, deep navy, teal→amber, magenta radial, red→blue, soft blue radial).
-- [ ] 1.6 Add `applyGradientSpec(spec)` returning the complete `{ type: "gradient", value, spec }` background — the single writer for gradient backgrounds.
-- [ ] 1.7 Re-export `gradient.ts` from `services/index.ts` and the public members from `modules/presentation/index.ts`.
-- [ ] 1.8 Verify by hand: `toCssGradient` on the three-stop teal/green/yellow spec at 90° produces `linear-gradient(90deg, #2A7B9B 0%, #57C785 50%, #EDDD53 100%)`, and `parseCssGradient("linear-gradient(160deg, #1b2735, #0a0e14)")` round-trips to a 2-stop 160° spec.
+- [x] 1.1 Add `apps/bibletime/src/modules/presentation/services/gradient.ts` with the `RgbaColor` (`r`/`g`/`b` 0–255, `a` 0–100), `GradientStop` (`color` + `position` 0–100), `GradientKind` (`linear` | `radial`), and `GradientSpec` (`kind`, `angle`, `stops`) types.
+- [x] 1.2 Add color conversion helpers to `gradient.ts`: `rgbaToHex` / `hexToRgba` (accepting 3-, 6-, and 8-digit hex with optional `#`, returning `null` on anything invalid) and `rgbaToCss`.
+- [x] 1.3 Implement `toCssGradient(spec)` — stops sorted ascending by position without mutating the input, `linear-gradient(<angle>deg, …)` vs `radial-gradient(circle at 50% 50%, …)`, hex per stop when every stop is opaque and `rgb(r g b / a%)` for any stop with alpha below 100.
+- [x] 1.4 Implement `parseCssGradient(value)` — narrow support for `linear-gradient(<angle>deg, <hex> [<pos>%], …)`, distributing positions evenly when absent, returning `null` for anything else (including the bundled `oklch()` gradients).
+- [x] 1.5 Add `DEFAULT_GRADIENT_SPEC`, `interpolateStops(before, after, position)` for track insertion, and `GRADIENT_PRESETS` (six `GradientSpec` entries matching the reference row: teal→green→yellow, deep navy, teal→amber, magenta radial, red→blue, soft blue radial).
+- [x] 1.6 Add `applyGradientSpec(spec)` returning the complete `{ type: "gradient", value, spec }` background — the single writer for gradient backgrounds.
+- [x] 1.7 Re-export `gradient.ts` from `services/index.ts` and the public members from `modules/presentation/index.ts`.
+- [x] 1.8 Verify by hand: `toCssGradient` on the three-stop teal/green/yellow spec at 90° produces `linear-gradient(90deg, #2A7B9B 0%, #57C785 50%, #EDDD53 100%)`, and `parseCssGradient("linear-gradient(160deg, #1b2735, #0a0e14)")` round-trips to a 2-stop 160° spec.
 
 ## 2. Background model and normalization
 
-- [ ] 2.1 Widen the `gradient` member of `SlideBackground` in `modules/presentation/interfaces/index.ts` to `{ type: "gradient"; value: string; spec?: GradientSpec }`, keeping `value` required.
-- [ ] 2.2 Extend `normalizeBackground` in `normalize-slide-template.ts` so a gradient with an empty/missing `value`, or a `spec` present with fewer than two stops, falls back to `DEFAULT_SLIDE_TEMPLATE.background`.
-- [ ] 2.3 Run `pnpm --filter web typecheck` and fix any exhaustiveness or destructuring fallout across the modules that consume `SlideBackground`.
+- [x] 2.1 Widen the `gradient` member of `SlideBackground` in `modules/presentation/interfaces/index.ts` to `{ type: "gradient"; value: string; spec?: GradientSpec }`, keeping `value` required.
+- [x] 2.2 Extend `normalizeBackground` in `normalize-slide-template.ts` so a gradient with an empty/missing `value`, or a `spec` present with fewer than two stops, falls back to `DEFAULT_SLIDE_TEMPLATE.background`.
+- [x] 2.3 Run `pnpm --filter web typecheck` and fix any exhaustiveness or destructuring fallout across the modules that consume `SlideBackground`.
 
 ## 3. ColorPicker primitive
 

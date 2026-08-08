@@ -360,4 +360,53 @@ export const es: Record<keyof typeof en, string> = {
   "settings.media.cacheHint":
     "Vaciarla nunca toca tus archivos ni quita diapositivas — las páginas se generan de nuevo cuando hagan falta.",
   "settings.media.webNote": "La biblioteca multimedia solo está disponible en la app de escritorio.",
+
+  "landing.tagline": "Todo lo que proyectas el domingo — Biblia, canciones, multimedia, notas — en un solo lugar.",
+  "landing.download": "Descargar — es gratis",
+  "landing.downloadNote": "Gratis, sin cuenta y sin nada que pagar.",
+  "landing.platforms": "macOS · Windows · Linux",
+  "landing.openInBrowser": "Ábrela en el navegador",
+  "landing.expand": "Ver más",
+  "landing.collapse": "Ver menos",
+  "landing.screenshotPending": "Captura próximamente",
+
+  "landing.card.bible.title": "La Biblia entera, ya en tu computadora",
+  "landing.card.bible.blurb": "Busca una cita, elige los versículos, proyéctalos.",
+  "landing.card.bible.detail":
+    "Escribe una cita como Juan 3:16 o navega libro por libro. Los versículos pasan a ser diapositivas en un paso, divididos como tú quieras y en la versión que elijas — y las que ya descargaste siguen funcionando sin internet.",
+  "landing.card.bible.alt": "La pestaña Biblia con el selector de libro, capítulo y versículo junto a la vista previa",
+
+  "landing.card.songs.title": "Canciones y sus letras",
+  "landing.card.songs.blurb": "Pega la letra y aparecen las secciones.",
+  "landing.card.songs.detail":
+    "Estrofa, coro y puente se detectan en la letra que pegas, así que la canción llega lista para proyectar. Busca entre las que guardaste, reordena las secciones según cómo la van a cantar hoy y envía cualquiera a la pantalla.",
+  "landing.card.songs.alt": "La pestaña Canciones con la lista, las secciones y la vista previa",
+
+  "landing.card.mediaNotes.title": "Multimedia y notas",
+  "landing.card.mediaNotes.blurb": "Imágenes, video, PDF, presentaciones y tu propio texto.",
+  "landing.card.mediaNotes.detail":
+    "Explora las carpetas de tu computadora y añade imágenes o video directo al servicio. Los PDF y las presentaciones de PowerPoint entran página por página. Y lo que necesites decir que no es un versículo ni una letra lo escribes como nota y lo proyectas con las mismas plantillas.",
+  "landing.card.mediaNotes.alt": "La pestaña Multimedia explorando carpetas con una cuadrícula de miniaturas",
+
+  "landing.card.templates.title": "Se ve como tú quieres",
+  "landing.card.templates.blurb": "Tipografía, color y fondos que defines una vez.",
+  "landing.card.templates.detail":
+    "Arma una plantilla — tipografías, tamaños, alineación, colores, una imagen de fondo o un degradado — y cada diapositiva hecha con ella sale igual. Cambia la plantilla después y las diapositivas la siguen, así que un servicio entero cambia de estilo sin tocar ninguna.",
+  "landing.card.templates.alt": "El editor de plantillas con los controles de tipografía junto a la vista previa",
+
+  "landing.card.presentation.title": "Una segunda pantalla que se porta bien",
+  "landing.card.presentation.blurb": "Su propia ventana para el proyector, controlada desde la tuya.",
+  "landing.card.presentation.detail":
+    "Proyectar abre una ventana aparte que puedes arrastrar al proyector o a la tele y poner en pantalla completa. Solo muestra lo que le envías — la congregación nunca ve la consola en la que estás trabajando.",
+  "landing.card.presentation.alt": "La ventana de proyección en una segunda pantalla mostrando un versículo",
+
+  "landing.card.offline.title": "Funciona sin internet",
+  "landing.card.offline.blurb": "Nada que iniciar sesión, nada que sincronizar.",
+  "landing.card.offline.detail":
+    "Tus proyectos, canciones y versiones de la Biblia descargadas viven en tu computadora, así que si se cae la conexión a mitad del servicio no cambia nada. Los proyectos son archivos que puedes copiar a una USB y abrir en otra computadora.",
+  "landing.card.offline.alt": "Un proyecto guardado como archivo en la computadora, abierto sin conexión",
+
+  "landing.footer.free": "Gratis, y gratis para seguir usándola.",
+  "landing.footer.source": "Código fuente en GitHub",
+  "landing.footer.console": "Abrir la app",
 }

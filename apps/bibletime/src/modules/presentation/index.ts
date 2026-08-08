@@ -5,15 +5,27 @@ export { useElementWidthScale } from "@/modules/presentation/hooks/use-slide-fit
 export { TemplateEditor } from "@/modules/presentation/components/template-editor"
 export {
   ANIMATED_BACKGROUND_REGISTRY,
+  DEFAULT_GRADIENT_SPEC,
   DEFAULT_SLIDE_TEMPLATE,
   FONT_REGISTRY,
+  GRADIENT_PRESETS,
   PRESET_BACKGROUNDS,
+  applyGradientSpec,
+  clampStopPosition,
   getAnimatedPreset,
   getDefaultAnimatedParams,
+  interpolateStops,
   normalizeSlideTemplate,
+  parseCssGradient,
+  toCssGradient,
+  wrapAngle,
 } from "@/modules/presentation/services"
 export type { AnimatedBackgroundPreset, AnimatedBackgroundControl } from "@/modules/presentation/services"
 export type {
+  GradientKind,
+  GradientSpec,
+  GradientStop,
+  RgbaColor,
   SlideBackground,
   SlideTemplate,
   SlideTextAlign,

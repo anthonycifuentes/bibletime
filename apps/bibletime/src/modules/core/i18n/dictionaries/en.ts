@@ -357,4 +357,53 @@ export const en = {
   "settings.media.clearCache": "Clear media cache",
   "settings.media.cacheHint": "Clearing never touches your files or removes slides — pages are re-rendered when next needed.",
   "settings.media.webNote": "The media library is only available in the desktop app.",
+
+  "landing.tagline": "Everything you put on the screen on Sunday — Bible, songs, media, notes — in one place.",
+  "landing.download": "Download — it's free",
+  "landing.downloadNote": "Free, with no account and nothing to pay for.",
+  "landing.platforms": "macOS · Windows · Linux",
+  "landing.openInBrowser": "Open it in the browser",
+  "landing.expand": "See more",
+  "landing.collapse": "Show less",
+  "landing.screenshotPending": "Screenshot coming soon",
+
+  "landing.card.bible.title": "The whole Bible, already on your computer",
+  "landing.card.bible.blurb": "Search a reference, pick the verses, project them.",
+  "landing.card.bible.detail":
+    "Type a reference like John 3:16 or browse book by book. Verses become slides in one step, split the way you want them, in the translation you choose — and the ones you've downloaded keep working with the internet off.",
+  "landing.card.bible.alt": "The Bible tab with a book, chapter, and verse picker beside a slide preview",
+
+  "landing.card.songs.title": "Songs and their lyrics",
+  "landing.card.songs.blurb": "Paste the lyrics, get the sections.",
+  "landing.card.songs.detail":
+    "Verse, chorus, and bridge are picked out of the lyrics you paste, so a song arrives ready to project. Search the songs you've saved, reorder the sections for how you're actually singing it tonight, and send any of them to the screen.",
+  "landing.card.songs.alt": "The Songs tab showing a song list, its sections, and a slide preview",
+
+  "landing.card.mediaNotes.title": "Media and notes",
+  "landing.card.mediaNotes.blurb": "Images, video, PDFs, slide decks, and your own text.",
+  "landing.card.mediaNotes.detail":
+    "Browse the media folders on your computer and add images or video straight to the service. PDFs and PowerPoint decks come in page by page. And anything you need to say that isn't a verse or a lyric, you type as a note and project it on the same templates.",
+  "landing.card.mediaNotes.alt": "The Media tab browsing folders with a grid of thumbnails",
+
+  "landing.card.templates.title": "It looks the way you want it",
+  "landing.card.templates.blurb": "Type, color, and backgrounds you set once.",
+  "landing.card.templates.detail":
+    "Build a template — fonts, sizes, alignment, colors, a background image or a gradient — and every slide made with it comes out matching. Change the template later and the slides follow, so a whole service restyles without touching a single slide.",
+  "landing.card.templates.alt": "The template editor with typography controls beside a live preview",
+
+  "landing.card.presentation.title": "A second screen that behaves",
+  "landing.card.presentation.blurb": "Its own window for the projector, controlled from yours.",
+  "landing.card.presentation.detail":
+    "Projecting opens a separate window you can drag onto the projector or the TV and put in fullscreen. It shows only what you send it — the congregation never sees the console you're working in.",
+  "landing.card.presentation.alt": "The presentation output window on a second display showing a verse",
+
+  "landing.card.offline.title": "Works with the internet off",
+  "landing.card.offline.blurb": "Nothing to sign in to, nothing to sync.",
+  "landing.card.offline.detail":
+    "Your projects, songs, and downloaded Bible translations live on your computer, so a dropped connection in the middle of a service changes nothing. Projects are plain files you can copy to a USB stick and open on another machine.",
+  "landing.card.offline.alt": "A project saved as a file on the computer, open with no connection",
+
+  "landing.footer.free": "Free, and free to keep using.",
+  "landing.footer.source": "Source code on GitHub",
+  "landing.footer.console": "Open the app",
 } as const

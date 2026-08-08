@@ -2,10 +2,20 @@ import { getAnimatedPreset } from "@/modules/presentation/services/animated-back
 import { DEFAULT_SLIDE_TEMPLATE, isKnownFontId } from "@/modules/presentation/services/slide-template"
 import type { SlideBackground, SlideTemplate } from "@/modules/presentation/interfaces"
 
-/** Falls back an `animated` background whose `presetId` isn't registered (a preset removed since this was saved) to the default background. */
+/**
+ * Falls back a background that can't render to the default one: an `animated`
+ * background whose `presetId` isn't registered (a preset removed since this
+ * was saved), or a `gradient` with nothing renderable — an empty `value`, or
+ * a structured spec too short to serialize into valid CSS.
+ */
 const normalizeBackground = (background: SlideBackground): SlideBackground => {
   if (background.type === "animated" && !getAnimatedPreset(background.presetId)) {
     return DEFAULT_SLIDE_TEMPLATE.background
+  }
+  if (background.type === "gradient") {
+    const hasValue = typeof background.value === "string" && background.value.trim() !== ""
+    const hasUsableSpec = !background.spec || background.spec.stops?.length >= 2
+    if (!hasValue || !hasUsableSpec) return DEFAULT_SLIDE_TEMPLATE.background
   }
   return background
 }

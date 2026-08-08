@@ -360,4 +360,53 @@ export const pt: Record<keyof typeof en, string> = {
   "settings.media.cacheHint":
     "Limpar nunca toca nos seus ficheiros nem remove slides — as páginas são geradas de novo quando forem necessárias.",
   "settings.media.webNote": "A biblioteca de multimédia só está disponível na app de computador.",
+
+  "landing.tagline": "Tudo o que projeta ao domingo — Bíblia, cânticos, multimédia, notas — num só sítio.",
+  "landing.download": "Descarregar — é grátis",
+  "landing.downloadNote": "Grátis, sem conta e sem nada a pagar.",
+  "landing.platforms": "macOS · Windows · Linux",
+  "landing.openInBrowser": "Abrir no navegador",
+  "landing.expand": "Ver mais",
+  "landing.collapse": "Ver menos",
+  "landing.screenshotPending": "Imagem em breve",
+
+  "landing.card.bible.title": "A Bíblia inteira, já no seu computador",
+  "landing.card.bible.blurb": "Procure uma referência, escolha os versículos, projete.",
+  "landing.card.bible.detail":
+    "Escreva uma referência como João 3:16 ou percorra livro a livro. Os versículos passam a slides num só passo, divididos como quiser e na versão que escolher — e as que já descarregou continuam a funcionar sem internet.",
+  "landing.card.bible.alt": "O separador Bíblia com o seletor de livro, capítulo e versículo ao lado da pré-visualização",
+
+  "landing.card.songs.title": "Cânticos e as suas letras",
+  "landing.card.songs.blurb": "Cole a letra e as secções aparecem.",
+  "landing.card.songs.detail":
+    "Estrofe, refrão e ponte são identificados na letra que cola, por isso o cântico chega pronto a projetar. Procure entre os que guardou, reordene as secções conforme vão cantá-lo hoje e envie qualquer uma para o ecrã.",
+  "landing.card.songs.alt": "O separador Cânticos com a lista, as secções e a pré-visualização",
+
+  "landing.card.mediaNotes.title": "Multimédia e notas",
+  "landing.card.mediaNotes.blurb": "Imagens, vídeo, PDF, apresentações e o seu próprio texto.",
+  "landing.card.mediaNotes.detail":
+    "Percorra as pastas do seu computador e junte imagens ou vídeo diretamente ao culto. Os PDF e as apresentações do PowerPoint entram página a página. E aquilo que precisa de dizer que não é um versículo nem uma letra escreve como nota e projeta com os mesmos modelos.",
+  "landing.card.mediaNotes.alt": "O separador Multimédia a percorrer pastas com uma grelha de miniaturas",
+
+  "landing.card.templates.title": "Fica com o aspeto que quiser",
+  "landing.card.templates.blurb": "Tipografia, cor e fundos definidos uma vez.",
+  "landing.card.templates.detail":
+    "Monte um modelo — tipos de letra, tamanhos, alinhamento, cores, uma imagem de fundo ou um gradiente — e todos os slides feitos com ele saem iguais. Mude o modelo depois e os slides acompanham, por isso um culto inteiro muda de estilo sem mexer num único slide.",
+  "landing.card.templates.alt": "O editor de modelos com os controlos de tipografia ao lado da pré-visualização",
+
+  "landing.card.presentation.title": "Um segundo ecrã que se porta bem",
+  "landing.card.presentation.blurb": "Uma janela própria para o projetor, comandada da sua.",
+  "landing.card.presentation.detail":
+    "Projetar abre uma janela separada que pode arrastar para o projetor ou para a televisão e pôr em ecrã inteiro. Mostra apenas o que lhe envia — a congregação nunca vê a consola onde está a trabalhar.",
+  "landing.card.presentation.alt": "A janela de projeção num segundo ecrã a mostrar um versículo",
+
+  "landing.card.offline.title": "Funciona sem internet",
+  "landing.card.offline.blurb": "Nada para iniciar sessão, nada para sincronizar.",
+  "landing.card.offline.detail":
+    "Os seus projetos, cânticos e versões da Bíblia descarregadas ficam no seu computador, por isso uma ligação que cai a meio do culto não muda nada. Os projetos são ficheiros que pode copiar para uma pen e abrir noutro computador.",
+  "landing.card.offline.alt": "Um projeto guardado como ficheiro no computador, aberto sem ligação",
+
+  "landing.footer.free": "Grátis, e grátis para continuar a usar.",
+  "landing.footer.source": "Código-fonte no GitHub",
+  "landing.footer.console": "Abrir a app",
 }
