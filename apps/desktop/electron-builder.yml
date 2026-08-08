@@ -1,0 +1,45 @@
+appId: com.anthonycifuentes.bibletime
+productName: BibleTime
+copyright: Copyright © BibleTime
+
+directories:
+  buildResources: build
+  output: release
+
+# Nothing in this package builds from source — the main process is plain TS
+# and the renderer ships as a pre-bundled Nitro output. Leaving the rebuild
+# step on makes @electron/rebuild walk pnpm's store and fail on the
+# workspace links it finds there.
+npmRebuild: false
+
+# Only the compiled main/preload go inside the asar. The renderer is not a
+# folder of static files — it's a Nitro SSR server (see `startBundledServer`
+# in src/main.ts) whose entry uses dynamic imports, and those don't resolve
+# from inside an asar archive. So it ships unpacked, under Resources/web.
+files:
+  - dist/**/*
+  - package.json
+
+extraResources:
+  - from: ../bibletime/.output
+    to: web
+
+mac:
+  category: public.app-category.productivity
+  icon: build/icon.icns
+  target:
+    - target: dir
+      arch: [arm64]
+  # Unsigned local build: without this, electron-builder picks up any
+  # Developer ID in the keychain and fails the build when it can't complete
+  # a full signing/notarization run.
+  identity: null
+
+win:
+  icon: build/icon.icns
+  target: nsis
+
+linux:
+  icon: build/icon.icns
+  category: Office
+  target: AppImage

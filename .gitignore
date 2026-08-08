@@ -13,6 +13,9 @@ out
 __unconfig*
 todos.json
 
+# packaged desktop builds (electron-builder output)
+release
+
 # turbo
 .turbo
 

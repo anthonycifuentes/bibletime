@@ -7,7 +7,76 @@ import path from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const webUrl = process.env.BIBLETIME_WEB_URL ?? "http://localhost:3000"
+
+/**
+ * Where the renderer is served from.
+ *
+ * In development that's the Vite dev server the `dev` script already waits
+ * on. In a packaged app there is no dev server, so the main process boots
+ * the app's own Nitro build (`node-server` preset) in-process and points at
+ * that instead — see `startBundledServer`. `BIBLETIME_WEB_URL` overrides
+ * both, which is how you point a packaged build at a staging server.
+ */
+const devWebUrl = process.env.BIBLETIME_WEB_URL ?? "http://localhost:3000"
+
+/** Set to the bundled server's address on startup in a packaged app; stays the dev server's otherwise. */
+let resolvedWebUrl = devWebUrl
+
+/** Asks the OS for a free port by binding one and immediately releasing it. */
+async function findFreePort(): Promise<number> {
+  const { createServer } = await import("node:net")
+  return new Promise((resolve, reject) => {
+    const probe = createServer()
+    probe.unref()
+    probe.on("error", reject)
+    probe.listen(0, "127.0.0.1", () => {
+      const address = probe.address()
+      const port = typeof address === "object" && address ? address.port : 0
+      probe.close(() => resolve(port))
+    })
+  })
+}
+
+/** Polls the server until it answers, so the window never loads against a socket that isn't listening yet. */
+async function waitForServer(url: string, timeoutMs = 30_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    try {
+      const response = await net.fetch(url, { method: "HEAD" })
+      if (response.ok || response.status < 500) return
+    } catch {
+      // Not listening yet — fall through to the retry delay.
+    }
+    if (Date.now() > deadline) throw new Error(`Bundled server did not start within ${timeoutMs}ms`)
+    await new Promise((resolve) => setTimeout(resolve, 150))
+  }
+}
+
+/**
+ * Starts the bundled Nitro server inside the main process and resolves to
+ * its URL.
+ *
+ * The web app is an SSR build (`.output/server/index.mjs`), not a folder of
+ * static files, so it can't be loaded over `file://` — it needs a running
+ * Node server, and Electron's main process already is one. The output ships
+ * as an unpacked resource (see `extraResources` in this package's build
+ * config) because Nitro's entry uses dynamic imports, which don't resolve
+ * from inside an asar archive.
+ */
+async function startBundledServer(): Promise<string> {
+  const serverEntry = path.join(process.resourcesPath, "web", "server", "index.mjs")
+  const port = await findFreePort()
+
+  process.env.PORT = String(port)
+  process.env.HOST = "127.0.0.1"
+  // Nitro reads these at import time, so they must be set before the entry
+  // module is evaluated — importing it *is* starting the server.
+  await import(pathToFileURL(serverEntry).href)
+
+  const url = `http://127.0.0.1:${port}`
+  await waitForServer(url)
+  return url
+}
 
 const TEMPLATE_MEDIA_SCHEME = "bibletime-media"
 const MEDIA_FILE_SCHEME = "bibletime-file"
@@ -1351,7 +1420,7 @@ function createWindow() {
     },
   })
 
-  win.loadURL(webUrl)
+  win.loadURL(resolvedWebUrl)
 
   // The "Proyectar" button opens `/present` via `window.open` — give it a
   // window the user can actually place on a second display: movable,
@@ -1409,6 +1478,22 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  // Packaged builds have no dev server to talk to, so the bundled SSR
+  // output is started first and every window loads from it. Resolved once
+  // here rather than per-window, so `activate` reuses the running server.
+  if (app.isPackaged && process.env.BIBLETIME_WEB_URL === undefined) {
+    try {
+      resolvedWebUrl = await startBundledServer()
+    } catch (error) {
+      dialog.showErrorBox(
+        "BibleTime couldn't start",
+        `The bundled app server failed to start.\n\n${String(error)}`
+      )
+      app.quit()
+      return
+    }
+  }
+
   await applyStoredProjectsDataDir()
   await loadOutputWindowBounds()
 
