@@ -28,9 +28,9 @@ import {
   Folder01Icon,
   Folder02Icon,
   FolderAddIcon,
+  GalleryThumbnailsIcon,
   GripVerticalIcon,
   PlayIcon,
-  Tick02Icon,
 } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
@@ -248,7 +248,7 @@ export function FolderTree({
           </ContextMenuTrigger>
           <ContextMenuContent>
             <ContextMenuItem onClick={() => onPrepareItem(item.id, owningFolderId)}>
-              <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
+              <HugeiconsIcon icon={GalleryThumbnailsIcon} strokeWidth={2} />
               {t("library.prepareSlide")}
             </ContextMenuItem>
             <ContextMenuItem onClick={() => onPresentItem(item.id, owningFolderId)}>

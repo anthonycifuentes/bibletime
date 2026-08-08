@@ -3,7 +3,7 @@ export type SlideBackground =
   | { type: "gradient"; value: string }
   | { type: "image"; value: string }
   | { type: "video"; value: string }
-  | { type: "animated"; presetId: string; params: Record<string, number | string> }
+  | { type: "animated"; presetId: string; params: Record<string, number | string | boolean> }
 
 export type SlideTextAlign = "left" | "center" | "right"
 

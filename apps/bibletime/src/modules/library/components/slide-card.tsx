@@ -14,7 +14,7 @@ import {
 } from "@workspace/ui/components/context-menu"
 import { cn } from "@workspace/ui/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Delete02Icon, GripVerticalIcon, PlayIcon, Tick02Icon } from "@hugeicons/core-free-icons"
+import { Delete02Icon, GalleryThumbnailsIcon, GripVerticalIcon, PlayIcon } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
 // A real `border`, not a `ring` box-shadow: an outset ring gets clipped by
@@ -108,7 +108,7 @@ export function SlideCard({ item, isSelected, templates, onSelect, onPresent, on
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onClick={() => onSelect(item.id, false)}>
-            <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
+            <HugeiconsIcon icon={GalleryThumbnailsIcon} strokeWidth={2} />
             {t("library.prepareSlide")}
           </ContextMenuItem>
           <ContextMenuItem onClick={() => onPresent(item.id)}>

@@ -77,7 +77,7 @@ export function TemplateEditor({ template, onChange, onReset, canUseVideoBackgro
     onChange({ background })
   }
 
-  const setBackgroundParam = (key: string, value: number | string) => {
+  const setBackgroundParam = (key: string, value: number | string | boolean) => {
     if (template.background.type !== "animated") return
     onChange({
       background: {
@@ -273,29 +273,51 @@ export function TemplateEditor({ template, onChange, onReset, canUseVideoBackgro
                     ? background.params[control.key]
                     : control.default
 
-                return control.type === "number" ? (
-                  <SliderComfortable
-                    key={control.key}
-                    variant="scrubber"
-                    label={control.label}
-                    min={control.min}
-                    max={control.max}
-                    step={control.step}
-                    value={typeof currentValue === "number" ? currentValue : control.default}
-                    onChange={(value) => setBackgroundParam(control.key, value)}
-                    formatValue={(value) => value.toFixed(2)}
-                  />
-                ) : (
+                if (control.type === "number") {
+                  return (
+                    <SliderComfortable
+                      key={control.key}
+                      variant="scrubber"
+                      label={control.label}
+                      min={control.min}
+                      max={control.max}
+                      step={control.step}
+                      value={typeof currentValue === "number" ? currentValue : control.default}
+                      onChange={(value) => setBackgroundParam(control.key, value)}
+                      formatValue={(value) => value.toFixed(2)}
+                    />
+                  )
+                }
+
+                if (control.type === "boolean") {
+                  const isOn = typeof currentValue === "boolean" ? currentValue : control.default
+                  return (
+                    <SettingRow key={control.key} label={control.label}>
+                      <Button
+                        type="button"
+                        variant={isOn ? "default" : "outline"}
+                        size="sm"
+                        aria-pressed={isOn}
+                        onClick={() => setBackgroundParam(control.key, !isOn)}
+                      >
+                        {isOn ? "Sí" : "No"}
+                      </Button>
+                    </SettingRow>
+                  )
+                }
+
+                const colorValue = typeof currentValue === "string" ? currentValue : control.default
+                return (
                   <SettingRow key={control.key} label={control.label}>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={typeof currentValue === "string" ? currentValue : control.default}
+                        value={colorValue}
                         onChange={(event) => setBackgroundParam(control.key, event.target.value)}
                         className="size-8 cursor-pointer rounded-md border border-input bg-transparent p-0.5"
                       />
                       <Input
-                        value={typeof currentValue === "string" ? currentValue : control.default}
+                        value={colorValue}
                         onChange={(event) => setBackgroundParam(control.key, event.target.value)}
                         className="w-24"
                         aria-label={control.label}
