@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import {
   closestCenter,
@@ -28,10 +28,11 @@ import {
   EmptyTitle,
 } from "@workspace/ui/components/empty"
 import { Input } from "@workspace/ui/components/input"
+import { OverflowActions } from "@workspace/ui/components/overflow-actions"
+import type { OverflowActionItem } from "@workspace/ui/components/overflow-actions"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Add01Icon,
-  Delete02Icon,
   Folder01Icon,
   Layers01Icon,
 } from "@hugeicons/core-free-icons"
@@ -77,6 +78,7 @@ export function SlideConsole({
 }: SlideConsoleProps) {
   const { t } = useTranslation()
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [actionsExpanded, setActionsExpanded] = useState(false)
   const [creatingFolder, setCreatingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
   const sensors = useSensors(
@@ -102,6 +104,59 @@ export function SlideConsole({
     onReorder(
       arrayMove(folder.items, oldIndex, newIndex).map((item) => item.id)
     )
+  }
+
+  const items = folder?.items
+  const hasSelection = selectedItemIds.size > 0
+
+  /**
+   * Every bulk action is always rendered — unavailable ones are disabled
+   * rather than unmounted, so the rail's width doesn't jump as the selection
+   * changes and the user can see which actions exist before selecting.
+   */
+  const bulkActions = useMemo<OverflowActionItem[]>(
+    () => [
+      {
+        id: "select-all",
+        label: t("library.selectAll"),
+        disabled: (items?.length ?? 0) === 0,
+      },
+      {
+        id: "clear-selection",
+        label: t("library.clearSelection"),
+        disabled: !hasSelection,
+      },
+      {
+        id: "apply-template",
+        label: t("library.applyTemplate"),
+        disabled: !hasSelection,
+      },
+      {
+        id: "remove",
+        label: t("library.removeSelected"),
+        disabled: !hasSelection,
+      },
+    ],
+    [items, hasSelection, t]
+  )
+
+  const runBulkAction = (action: OverflowActionItem) => {
+    if (!folder) return
+
+    switch (action.id) {
+      case "select-all":
+        onSelectAll(folder.items.map((item) => item.id))
+        break
+      case "clear-selection":
+        onClearSelection()
+        break
+      case "remove":
+        onRemove([...selectedItemIds])
+        break
+      case "apply-template":
+        setPickerOpen(true)
+        break
+    }
   }
 
   if (!folder) {
@@ -160,53 +215,21 @@ export function SlideConsole({
     )
   }
 
-  const hasSelection = selectedItemIds.size > 0
-
   return (
     <div className="flex h-full flex-col gap-3 overflow-hidden p-4">
       <div className="flex shrink-0 items-center justify-between gap-2">
         <h1 className="truncate text-lg font-bold">{folder.name}</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onSelectAll(folder.items.map((item) => item.id))}
-            disabled={folder.items.length === 0}
-          >
-            {t("library.selectAll")}
-          </Button>
-          {hasSelection ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onClearSelection}
-            >
-              {t("library.clearSelection")}
-            </Button>
-          ) : null}
-          {hasSelection ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onRemove([...selectedItemIds])}
-            >
-              <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-              {t("library.removeSelected")}
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            variant="default"
-            size="sm"
-            disabled={!hasSelection}
-            onClick={() => setPickerOpen(true)}
-          >
-            {t("library.applyTemplate")}
-          </Button>
-        </div>
+        <OverflowActions
+          primaryActions={[]}
+          overflowActions={bulkActions}
+          expanded={actionsExpanded}
+          onExpandedChange={setActionsExpanded}
+          onAction={runBulkAction}
+          collapseOnAction={false}
+          size="sm"
+          openLabel={t("library.showExtraActions")}
+          closeLabel={t("library.hideExtraActions")}
+        />
       </div>
 
       {folder.items.length === 0 ? (
