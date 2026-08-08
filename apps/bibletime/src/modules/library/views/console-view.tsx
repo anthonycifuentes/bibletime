@@ -1,4 +1,5 @@
 import { useConsoleStore } from "@/modules/library/actions/use-console-store"
+import { useProjectAutosave } from "@/modules/library/actions/use-project-autosave"
 import { useLibrary } from "@/modules/library/actions/use-library"
 import { useProjects } from "@/modules/library/actions/use-projects"
 import { BottomDrawer } from "@/modules/library/components/bottom-drawer"
@@ -36,6 +37,15 @@ export function ConsoleView() {
   const { t } = useTranslation()
   const projects = useProjects()
   const library = useLibrary(projects.activeId ?? null)
+
+  // Mirrors the active project onto its bound file as it changes. Mounted
+  // here because this is where both halves of what gets written — the
+  // project and its folders — are already held.
+  const { saveState, flushPendingSave } = useProjectAutosave({
+    project: projects.activeProject,
+    folders: library.folders,
+    saveProject: projects.saveProject,
+  })
   const templatesState = useTemplates()
   const bottomTab = useConsoleStore((state) => state.bottomTab)
   const setBottomTab = useConsoleStore((state) => state.setBottomTab)
@@ -269,8 +279,14 @@ export function ConsoleView() {
                 await projects.remove(projectId)
               })()
             }}
-            onSaveProject={projects.saveProject}
+            // Flushes any queued autosave first, so an explicit Save never
+            // leaves a debounced write pending behind it.
+            onSaveProject={async (projectId) => {
+              await flushPendingSave()
+              return projects.saveProject(projectId)
+            }}
             onSaveProjectAs={projects.saveProjectAs}
+            projectSaveState={saveState}
             onOpenProjectFile={projects.openProjectFile}
             openFolderId={openFolderId}
             onAddVerse={(data, templateId) => {

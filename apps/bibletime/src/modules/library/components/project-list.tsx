@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { FormEvent } from "react"
 
-import type { Project, ProjectSaveResult } from "@/modules/library/interfaces"
+import type { Project, ProjectSaveResult, ProjectSaveState } from "@/modules/library/interfaces"
 import { Button } from "@workspace/ui/components/button"
 import {
   Dialog,
@@ -33,6 +33,52 @@ import {
 } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
+/**
+ * Whether the active project is actually in step with its file.
+ *
+ * Auto-save is invisible by nature — the whole reason a manual Save button
+ * still exists is that you can't otherwise tell whether it's working. This
+ * is what makes that answerable at a glance, so it states the bound path on
+ * success and the reason on failure rather than just a coloured dot.
+ */
+function ProjectSaveIndicator({ state }: { state: ProjectSaveState }) {
+  const { t } = useTranslation()
+
+  const label =
+    state.status === "saved"
+      ? t("library.saveStatusSaved")
+      : state.status === "saving"
+        ? t("library.saveStatusSaving")
+        : state.status === "unsaved"
+          ? t("library.saveStatusUnsaved")
+          : state.status === "failed"
+            ? t("library.saveStatusFailed")
+            : t("library.saveStatusUnbound")
+
+  const detail =
+    state.status === "failed"
+      ? t("library.saveStatusFailedDetail", { error: state.error })
+      : state.status === "unbound"
+        ? t("library.saveStatusUnboundHint")
+        : state.path
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span
+        className={cn(
+          "text-xs font-medium",
+          state.status === "failed" ? "text-destructive" : "text-muted-foreground"
+        )}
+      >
+        {label}
+      </span>
+      <span className="truncate text-xs text-muted-foreground" title={detail}>
+        {detail}
+      </span>
+    </div>
+  )
+}
+
 interface ProjectListProps {
   projects: Project[]
   activeProjectId: string | null
@@ -45,6 +91,8 @@ interface ProjectListProps {
   onSaveProject: (projectId: string) => Promise<ProjectSaveResult>
   /** Always asks for a location, and rebinds the project to whatever is chosen. */
   onSaveProjectAs: (projectId: string) => Promise<ProjectSaveResult>
+  /** Whether the active project is currently in step with its bound file. */
+  saveState: ProjectSaveState
   /** Reads a previously-exported project file's contents and creates a new project from it — throws on invalid input. */
   onOpenProjectFile: (contents: string, filePath?: string) => Promise<unknown>
 }
@@ -78,6 +126,7 @@ export function ProjectList({
   onDeleteProject,
   onSaveProject,
   onSaveProjectAs,
+  saveState,
   onOpenProjectFile,
 }: ProjectListProps) {
   const { t } = useTranslation()
@@ -197,6 +246,8 @@ export function ProjectList({
           />
         </form>
       ) : null}
+
+      <ProjectSaveIndicator state={saveState} />
 
       {saveStatus ? <p className="truncate text-xs text-muted-foreground">{saveStatus}</p> : null}
 

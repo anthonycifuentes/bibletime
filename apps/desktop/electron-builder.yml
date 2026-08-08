@@ -36,10 +36,10 @@ mac:
   identity: null
 
 win:
-  icon: build/icon.icns
+  icon: build/icon.ico
   target: nsis
 
 linux:
-  icon: build/icon.icns
+  icon: build/icon-1024.png
   category: Office
   target: AppImage

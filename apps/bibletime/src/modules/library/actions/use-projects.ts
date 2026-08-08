@@ -74,18 +74,6 @@ export const useProjects = () => {
     if (isBrowser) window.localStorage.setItem(ACTIVE_ID_STORAGE_KEY, id)
   }, [])
 
-  const create = useCallback(
-    async (name: string) => {
-      const now = Date.now()
-      const project: Project = { id: createId("project"), name, createdAt: now, updatedAt: now }
-      await projectStorage.save(project)
-      await refresh()
-      setActive(project.id)
-      return project
-    },
-    [refresh, setActive]
-  )
-
   const rename = useCallback(
     async (id: string, name: string) => {
       const existing = projects.find((project) => project.id === id)
@@ -138,13 +126,19 @@ export const useProjects = () => {
    * native save dialog (and the project is bound to whatever they chose); on
    * web, where there is no filesystem to pick from, it stays the browser
    * download it has always been.
+   *
+   * Takes the project itself rather than looking it up by id, for `create`,
+   * which needs to bind a project it has only just written to storage —
+   * `projects` is React state and won't contain it until the next render, so
+   * an id lookup would fail on the very call that matters.
+   *
+   * Split out for `create`, which needs to bind a project it has only just
+   * written to storage — `projects` is React state and won't contain it until
+   * the next render, so an id lookup would fail on the very call that matters.
    */
-  const saveProjectAs = useCallback(
-    async (id: string): Promise<ProjectSaveResult> => {
-      const project = projects.find((candidate) => candidate.id === id)
-      if (!project) return { status: "failed", error: `Unknown project: ${id}` }
-
-      const folders = await foldersOf(id)
+  const saveProjectToNewPath = useCallback(
+    async (project: Project): Promise<ProjectSaveResult> => {
+      const folders = await foldersOf(project.id)
       const bridge = window.bibletime?.project
 
       if (!bridge?.saveFileDialog) {
@@ -164,7 +158,43 @@ export const useProjects = () => {
       await bindFilePath(project, result.path)
       return { status: "saved", path: result.path }
     },
-    [bindFilePath, foldersOf, projects]
+    [bindFilePath, foldersOf]
+  )
+
+  const saveProjectAs = useCallback(
+    async (id: string): Promise<ProjectSaveResult> => {
+      const project = projects.find((candidate) => candidate.id === id)
+      if (!project) return { status: "failed", error: `Unknown project: ${id}` }
+      return saveProjectToNewPath(project)
+    },
+    [projects, saveProjectToNewPath]
+  )
+
+  /**
+   * Creates a project and, on desktop, immediately asks where it should live
+   * so it is file-backed from its first moment rather than from whenever
+   * someone remembers to save.
+   *
+   * The project is written to managed storage *before* the dialog opens, and
+   * a dismissed dialog is not an error — it just leaves the project unbound.
+   * Creating first means an accidental Esc can't discard the name the user
+   * just typed, and it costs nothing: managed storage is the source of truth
+   * either way, and the file is a mirror of it.
+   */
+  const create = useCallback(
+    async (name: string) => {
+      const now = Date.now()
+      const project: Project = { id: createId("project"), name, createdAt: now, updatedAt: now }
+      await projectStorage.save(project)
+      await refresh()
+      setActive(project.id)
+
+      // Web has no filesystem to pick from, so creation stays dialog-free.
+      if (window.bibletime?.project.saveFileDialog) await saveProjectToNewPath(project)
+
+      return project
+    },
+    [refresh, saveProjectToNewPath, setActive]
   )
 
   /**

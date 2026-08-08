@@ -1,6 +1,11 @@
 import { NotesPickerPanel } from "@/modules/notes"
 import type { NoteSlidePayload } from "@/modules/notes"
-import type { BiblePassageItemData, Project, ProjectSaveResult } from "@/modules/library/interfaces"
+import type {
+  BiblePassageItemData,
+  Project,
+  ProjectSaveResult,
+  ProjectSaveState,
+} from "@/modules/library/interfaces"
 import type { BottomTab } from "@/modules/library/actions/use-console-store"
 import { useConsoleStore } from "@/modules/library/actions/use-console-store"
 import { BiblePickerPanel } from "@/modules/library/components/bible-picker-panel"
@@ -29,6 +34,8 @@ interface BottomDrawerProps {
   onDeleteProject: (projectId: string) => void
   onSaveProject: (projectId: string) => Promise<ProjectSaveResult>
   onSaveProjectAs: (projectId: string) => Promise<ProjectSaveResult>
+  /** How the active project currently relates to its bound file — shown beside the save controls. */
+  projectSaveState: ProjectSaveState
   onOpenProjectFile: (contents: string, filePath?: string) => Promise<unknown>
   openFolderId: string | null
   onAddVerse: (item: BiblePassageItemData, templateId: string | undefined) => void
@@ -79,6 +86,7 @@ export function BottomDrawer({
   onDeleteProject,
   onSaveProject,
   onSaveProjectAs,
+  projectSaveState,
   onOpenProjectFile,
   openFolderId,
   onAddVerse,
@@ -150,6 +158,7 @@ export function BottomDrawer({
             onDeleteProject={onDeleteProject}
             onSaveProject={onSaveProject}
             onSaveProjectAs={onSaveProjectAs}
+            saveState={projectSaveState}
             onOpenProjectFile={onOpenProjectFile}
           />
         ) : null}

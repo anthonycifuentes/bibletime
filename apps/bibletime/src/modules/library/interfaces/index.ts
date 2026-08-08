@@ -155,6 +155,27 @@ export type ProjectSaveResult =
   | { status: "failed"; error: string; retryWithDialog?: boolean }
 
 /**
+ * How the active project's managed-storage state currently relates to the
+ * file it is bound to.
+ *
+ * Runtime-only and deliberately *not* stored on `Project`: it describes a
+ * relationship between two things right now, and a "saved" value restored
+ * from disk at startup would be a claim this session never verified. The web
+ * build, which has no file to be bound to, is always `unbound`.
+ */
+export type ProjectSaveState =
+  /** No file binding — nothing is auto-saved, and the first explicit save binds it. */
+  | { status: "unbound" }
+  /** Written and up to date. `path` is the bound file. */
+  | { status: "saved"; path: string }
+  /** A write is in flight. */
+  | { status: "saving"; path: string }
+  /** Changed since the last successful write; a write is pending. */
+  | { status: "unsaved"; path: string }
+  /** The last write failed. Not retried on a timer — see the autosave hook. */
+  | { status: "failed"; path: string; error: string }
+
+/**
  * The on-disk/exported JSON shape for a single project file: the project's
  * name plus every one of its folders (including nested subfolders and
  * slides). `id`/`createdAt`/`updatedAt` are deliberately omitted from the
