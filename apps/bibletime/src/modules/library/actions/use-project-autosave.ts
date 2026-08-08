@@ -40,6 +40,24 @@ export const useProjectAutosave = ({ project, folders, saveProject }: UseProject
   const latestRef = useRef({ project, folders, saveProject })
   latestRef.current = { project, folders, saveProject }
 
+  /**
+   * Sets the save state only when it actually differs.
+   *
+   * Every `setState` here would otherwise hand React a fresh object literal
+   * and force a re-render, which re-runs the effect below — the second half
+   * of the render loop this hook has to avoid.
+   */
+  const applyState = useCallback((next: ProjectSaveState) => {
+    setState((current) =>
+      current.status === next.status &&
+      ("path" in current ? current.path : undefined) === ("path" in next ? next.path : undefined) &&
+      (current.status === "failed" ? current.error : undefined) ===
+        (next.status === "failed" ? next.error : undefined)
+        ? current
+        : next
+    )
+  }, [])
+
   const runSave = useCallback(async () => {
     const { project: current, saveProject: save } = latestRef.current
     if (!current?.filePath) return
@@ -54,25 +72,25 @@ export const useProjectAutosave = ({ project, folders, saveProject }: UseProject
     inFlightRef.current = true
 
     const signature = projectContentSignature(current, latestRef.current.folders)
-    setState({ status: "saving", path: current.filePath })
+    applyState({ status: "saving", path: current.filePath })
 
     try {
       const result = await save(current.id)
       if (result.status === "saved") {
         savedSignatureRef.current.set(current.id, signature)
-        setState({ status: "saved", path: result.path ?? current.filePath })
+        applyState({ status: "saved", path: result.path ?? current.filePath })
       } else if (result.status === "failed") {
         // Surfaced and left alone — no timed retry. The next content change
         // or an explicit save is what tries again.
-        setState({ status: "failed", path: current.filePath, error: result.error })
+        applyState({ status: "failed", path: current.filePath, error: result.error })
       } else {
         // `canceled` can't normally reach here (autosave only runs on a bound
         // project, which never opens a dialog), but leaving the state on
         // "saving" forever would be a lie if it ever did.
-        setState({ status: "unsaved", path: current.filePath })
+        applyState({ status: "unsaved", path: current.filePath })
       }
     } catch (error) {
-      setState({ status: "failed", path: current.filePath, error: String(error) })
+      applyState({ status: "failed", path: current.filePath, error: String(error) })
     } finally {
       inFlightRef.current = false
       if (rerunRef.current) {
@@ -80,7 +98,7 @@ export const useProjectAutosave = ({ project, folders, saveProject }: UseProject
         void runSaveRef.current()
       }
     }
-  }, [])
+  }, [applyState])
 
   /** Lets `runSave`'s `finally` re-enter itself without making it its own dependency. */
   const runSaveRef = useRef(runSave)
@@ -95,32 +113,37 @@ export const useProjectAutosave = ({ project, folders, saveProject }: UseProject
     await runSave()
   }, [runSave])
 
+  const projectId = project?.id
+  const filePath = project?.filePath
+  const canWriteFiles = typeof window !== "undefined" && Boolean(window.bibletime?.project.saveToPath)
+
+  // Derived during render, deliberately. `useLibrary` rebuilds `folders` with
+  // a `.filter()` on every render, so depending on that array's identity
+  // would re-run the effect every render — and an effect that calls
+  // `setState` every render is an infinite loop (React error #185). The
+  // signature is a string: it only changes when the content actually does.
+  const signature = project && filePath ? projectContentSignature(project, folders) : ""
+
   useEffect(() => {
-    if (!project) {
-      setState({ status: "unbound" })
+    if (!projectId || !filePath || !canWriteFiles) {
+      // No binding, or no way to write one (the web build): nothing to mirror.
+      applyState({ status: "unbound" })
       return
     }
 
-    // No binding, or no way to write one (the web build): nothing to mirror.
-    if (!project.filePath || !window.bibletime?.project.saveToPath) {
-      setState({ status: "unbound" })
-      return
-    }
-
-    const signature = projectContentSignature(project, folders)
-    const lastSaved = savedSignatureRef.current.get(project.id)
+    const lastSaved = savedSignatureRef.current.get(projectId)
 
     // First sighting of this project is the baseline, not a change — without
     // this, opening the app or switching projects would rewrite every file.
     if (lastSaved === undefined) {
-      savedSignatureRef.current.set(project.id, signature)
-      setState({ status: "saved", path: project.filePath })
+      savedSignatureRef.current.set(projectId, signature)
+      applyState({ status: "saved", path: filePath })
       return
     }
 
     if (signature === lastSaved) return
 
-    setState({ status: "unsaved", path: project.filePath })
+    applyState({ status: "unsaved", path: filePath })
     if (timerRef.current !== undefined) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
       timerRef.current = undefined
@@ -130,7 +153,7 @@ export const useProjectAutosave = ({ project, folders, saveProject }: UseProject
     return () => {
       if (timerRef.current !== undefined) clearTimeout(timerRef.current)
     }
-  }, [folders, project, runSave])
+  }, [applyState, canWriteFiles, filePath, projectId, runSave, signature])
 
   // Best-effort final write on the way out. `pagehide` can't await an async
   // IPC round-trip, so this narrows the last gap rather than closing it —

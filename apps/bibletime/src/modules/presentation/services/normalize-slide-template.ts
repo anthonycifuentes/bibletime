@@ -14,7 +14,7 @@ const normalizeBackground = (background: SlideBackground): SlideBackground => {
   }
   if (background.type === "gradient") {
     const hasValue = typeof background.value === "string" && background.value.trim() !== ""
-    const hasUsableSpec = !background.spec || background.spec.stops?.length >= 2
+    const hasUsableSpec = !background.spec || background.spec.stops.length >= 2
     if (!hasValue || !hasUsableSpec) return DEFAULT_SLIDE_TEMPLATE.background
   }
   return background

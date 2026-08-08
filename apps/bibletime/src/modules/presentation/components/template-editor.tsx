@@ -4,11 +4,15 @@ import type { ReactNode } from "react"
 import type { SlideBackground, SlideTemplate, SlideTextAlign } from "@/modules/presentation/interfaces"
 import {
   ANIMATED_BACKGROUND_REGISTRY,
+  DEFAULT_GRADIENT_SPEC,
   FONT_REGISTRY,
   PRESET_BACKGROUNDS,
+  applyGradientSpec,
   getAnimatedPreset,
   getDefaultAnimatedParams,
 } from "@/modules/presentation/services"
+import { GradientEditor } from "@/modules/presentation/components/gradient-editor"
+import { useTranslation } from "@/modules/core/i18n"
 import { Button } from "@workspace/ui/components/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
 import { Input } from "@workspace/ui/components/input"
@@ -25,6 +29,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import {
   AiMagicIcon,
   Delete02Icon,
+  PaintBoardIcon,
   TextAlignCenterIcon,
   TextAlignLeftIcon,
   TextAlignRightIcon,
@@ -69,6 +74,7 @@ function SettingRow({ label, children }: { label: string; children: ReactNode })
  * Input), not a copy of any reference tool's visual style.
  */
 export function TemplateEditor({ template, onChange, onReset, canUseVideoBackground }: TemplateEditorProps) {
+  const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const videoInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -161,6 +167,41 @@ export function TemplateEditor({ template, onChange, onReset, canUseVideoBackgro
               className="size-8 cursor-pointer rounded-md border border-input bg-transparent p-0.5"
             />
           </SettingRow>
+
+          <SettingRow label={t("templates.gradient.title")}>
+            <div className="flex items-center gap-2">
+              {template.background.type === "gradient" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setBackground(PRESET_BACKGROUNDS[1].background)}
+                >
+                  <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+                  <span className="sr-only">{t("templates.gradient.remove")}</span>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBackground(applyGradientSpec(DEFAULT_GRADIENT_SPEC))}
+                >
+                  <HugeiconsIcon icon={PaintBoardIcon} strokeWidth={2} />
+                  {t("templates.gradient.title")}
+                </Button>
+              )}
+            </div>
+          </SettingRow>
+
+          {/*
+            Expands in place while the background is a gradient — the same
+            shape as the animated-background controls further down, so the
+            rail reads consistently rather than opening a second surface.
+          */}
+          {template.background.type === "gradient" ? (
+            <GradientEditor background={template.background} onChange={setBackground} />
+          ) : null}
 
           <SettingRow label="Imagen">
             <div className="flex items-center gap-2">

@@ -47,19 +47,29 @@ export function BentoCard({ card, isExpanded, onToggle }: BentoCardProps) {
       style={{ viewTransitionName: `landing-card-${card.id}` }}
       className={cn(
         "group relative flex flex-col gap-4 rounded-3xl border border-border bg-card p-5 text-left outline-none transition-colors hover:border-ring/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:p-6",
+        // Expanding takes the whole row rather than a taller cell: grid rows
+        // here are sized by their content, so a card spanning two of them
+        // inherits its neighbours' height and opens as a mostly-empty box.
         isExpanded
-          ? "md:col-span-2 lg:col-span-2 lg:row-span-2 lg:flex-row lg:items-start lg:gap-8"
+          ? "md:col-span-2 lg:col-span-4 lg:flex-row lg:items-center lg:gap-10"
           : card.span === "md" && "md:col-span-2"
       )}
     >
-      <div className="flex flex-col gap-2 lg:flex-1">
-        <h2 className="pr-8 text-lg font-bold text-balance sm:text-xl">{t(card.titleKey)}</h2>
+      <div className={cn("flex flex-col gap-2", isExpanded && "lg:flex-1 lg:justify-center")}>
+        <h2
+          className={cn(
+            "pr-8 font-bold text-balance",
+            isExpanded ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
+          )}
+        >
+          {t(card.titleKey)}
+        </h2>
         <p className="text-sm text-pretty text-muted-foreground">{t(card.blurbKey)}</p>
 
         {isExpanded ? (
           <p
             id={detailId}
-            className="mt-2 text-sm text-pretty text-foreground/80 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-200 motion-safe:ease-out-expo"
+            className="mt-2 max-w-prose text-sm text-pretty text-foreground/80 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-200 motion-safe:ease-out-expo"
           >
             {t(card.detailKey)}
           </p>
@@ -70,7 +80,10 @@ export function BentoCard({ card, isExpanded, onToggle }: BentoCardProps) {
         src={card.image}
         alt={t(card.altKey)}
         aspect={card.aspect}
-        className={cn("mt-auto", isExpanded && "lg:mt-0 lg:w-1/2 lg:shrink-0")}
+        // Expanded, the frame is sized by height so a tall shot and a wide
+        // one take the same band of the row instead of one of them
+        // dictating how far the card opens.
+        className={cn("mt-auto", isExpanded && "lg:mt-0 lg:h-72 lg:w-auto lg:shrink-0")}
       />
 
       <span

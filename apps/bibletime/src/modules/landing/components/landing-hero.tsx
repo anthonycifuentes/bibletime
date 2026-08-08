@@ -10,7 +10,7 @@ export function LandingHero() {
   const { t } = useTranslation()
 
   return (
-    <div className="flex flex-col justify-between gap-8 rounded-3xl border border-border bg-card p-6 sm:p-8 lg:col-span-2 lg:row-span-2">
+    <div className="flex flex-col justify-between gap-8 rounded-3xl border border-border bg-card p-6 sm:p-8 md:col-span-2">
       <div className="flex flex-col gap-5">
         <img
           src="/icon-192.png"

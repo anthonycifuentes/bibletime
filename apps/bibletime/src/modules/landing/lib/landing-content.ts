@@ -75,7 +75,7 @@ export const LANDING_CARDS: LandingCard[] = [
     detailKey: "landing.card.offline.detail",
     altKey: "landing.card.offline.alt",
     image: null,
-    aspect: "phone",
-    span: "sm",
+    aspect: "wide",
+    span: "md",
   },
 ]

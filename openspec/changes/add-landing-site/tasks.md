@@ -21,30 +21,30 @@
 
 ## 4. Bento grid and expansion
 
-- [ ] 4.1 Build `components/bento-card.tsx` as a single `<button type="button">` with `aria-expanded` and `aria-controls`, rendering title, blurb, `ScreenshotFrame`, the corner expand affordance, and the detail text only when expanded. No interactive element inside it.
-- [ ] 4.2 Build `components/bento-grid.tsx` — responsive grid (1 / 2 / 4 columns), hero cell plus mapped cards, holding the `expandedId: LandingCardId | null` state so at most one card is open.
-- [ ] 4.3 Apply expanded sizing by class swap (expanded card spans 2 columns × 2 rows at `lg`, full width in the single-column layout) and animate the revealed detail content with `motion-safe:` transitions using `--ease-out-expo`.
-- [ ] 4.4 Wrap the expand/collapse state update in `document.startViewTransition` when it exists and reduced motion is not requested; fall back to a plain state update otherwise.
-- [ ] 4.5 Handle Escape via `onKeyDown` on the grid container to collapse the open card, leaving focus on the card's button.
-- [ ] 4.6 On the single-column layout, scroll the newly expanded card into view with `block: "nearest"`.
+- [x] 4.1 Build `components/bento-card.tsx` as a single `<button type="button">` with `aria-expanded` and `aria-controls`, rendering title, blurb, `ScreenshotFrame`, the corner expand affordance, and the detail text only when expanded. No interactive element inside it.
+- [x] 4.2 Build `components/bento-grid.tsx` — responsive grid (1 / 2 / 4 columns), hero cell plus mapped cards, holding the `expandedId: LandingCardId | null` state so at most one card is open.
+- [x] 4.3 Apply expanded sizing by class swap (the expanded card takes the full row at `lg` — see design.md decision 3 — and full width in the single-column layout) and animate the revealed detail content with `motion-safe:` transitions using `--ease-out-expo`.
+- [x] 4.4 Wrap the expand/collapse state update in `document.startViewTransition` when it exists and reduced motion is not requested; fall back to a plain state update otherwise.
+- [x] 4.5 Handle Escape via `onKeyDown` on the grid container to collapse the open card, leaving focus on the card's button.
+- [x] 4.6 On the single-column layout, scroll the newly expanded card into view with `block: "nearest"`.
 
 ## 5. Route and metadata
 
-- [ ] 5.1 Replace the `beforeLoad` redirect in `apps/bibletime/src/routes/index.tsx` with `component: LandingView`.
-- [ ] 5.2 Add a route-level `head` with a landing-specific `title` and `description` distinct from the console's defaults.
-- [ ] 5.3 Compose `views/landing-view.tsx` — page shell (`bg-background`, centered max-width, page padding), `BentoGrid`, `LandingFooter` — and confirm no console module is imported anywhere in `modules/landing`.
+- [x] 5.1 Replace the `beforeLoad` redirect in `apps/bibletime/src/routes/index.tsx` with `component: LandingView`.
+- [x] 5.2 Add a route-level `head` with a landing-specific `title` and `description` distinct from the console's defaults.
+- [x] 5.3 Compose `views/landing-view.tsx` — page shell (`bg-background`, centered max-width, page padding), `BentoGrid`, `LandingFooter` — and confirm no console module is imported anywhere in `modules/landing`.
 
 ## 6. Desktop entry point
 
-- [ ] 6.1 In `apps/desktop/src/main.ts`, load `new URL("/library", resolvedWebUrl).toString()` at the `win.loadURL` call in `createWindow`, leaving `setWindowOpenHandler` and the `/present` path untouched.
-- [ ] 6.2 Verify the dev shell (`BIBLETIME_WEB_URL` / `localhost:3000`) opens the console, not the landing page.
+- [x] 6.1 In `apps/desktop/src/main.ts`, load `new URL("/library", resolvedWebUrl).toString()` at the `win.loadURL` call in `createWindow`, leaving `setWindowOpenHandler` and the `/present` path untouched.
+- [x] 6.2 Verify the dev shell (`BIBLETIME_WEB_URL` / `localhost:3000`) opens the console, not the landing page.
 
 ## 7. Verification
 
-- [ ] 7.1 Check `/` at phone, tablet, and desktop widths — no horizontal scrolling, grid collapses to one column, CTAs reachable without scrolling on desktop.
-- [ ] 7.2 Check `/` in both dark and light themes — every surface, border, and text pair renders legibly with no hard-coded color.
-- [ ] 7.3 Keyboard pass: Tab to each card, Enter/Space expands, a second card collapses the first, Escape collapses and keeps focus, and both CTAs are reachable without expanding anything.
-- [ ] 7.4 Run with reduced motion enabled and confirm the expansion applies with no transition and the detail content is fully visible.
-- [ ] 7.5 Confirm `/library` and the rest of the console are unchanged, and that no landing image request 404s.
-- [ ] 7.6 Launch a packaged desktop build and confirm the main window opens the console.
-- [ ] 7.7 Run `pnpm --filter web typecheck` and `pnpm --filter web lint` clean.
+- [x] 7.1 Check `/` at phone, tablet, and desktop widths — no horizontal scrolling, grid collapses to one column, CTAs reachable without scrolling on desktop.
+- [x] 7.2 Check `/` in both dark and light themes — every surface, border, and text pair renders legibly with no hard-coded color.
+- [x] 7.3 Keyboard pass: Tab to each card, Enter/Space expands, a second card collapses the first, Escape collapses and keeps focus, and both CTAs are reachable without expanding anything.
+- [x] 7.4 Run with reduced motion enabled and confirm the expansion applies with no transition and the detail content is fully visible.
+- [x] 7.5 Confirm `/library` and the rest of the console are unchanged, and that no landing image request 404s.
+- [x] 7.6 Launch a packaged desktop build and confirm the main window opens the console.
+- [x] 7.7 Run `pnpm --filter web typecheck` and `pnpm --filter web lint` clean.

@@ -3,6 +3,7 @@ export type { SlidePreviewProps } from "@/modules/presentation/components/slide-
 export { SlideFrame } from "@/modules/presentation/components/slide-frame"
 export { useElementWidthScale } from "@/modules/presentation/hooks/use-slide-fit"
 export { TemplateEditor } from "@/modules/presentation/components/template-editor"
+export { GradientEditor } from "@/modules/presentation/components/gradient-editor"
 export {
   ANIMATED_BACKGROUND_REGISTRY,
   DEFAULT_GRADIENT_SPEC,

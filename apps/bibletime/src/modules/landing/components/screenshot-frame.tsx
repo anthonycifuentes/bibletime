@@ -4,9 +4,14 @@ import { Image01Icon } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 import { cn } from "@workspace/ui/lib/utils"
 
+/**
+ * Chosen so a tall frame in a one-column cell and a wide frame in a
+ * two-column cell come out roughly the same height — that's what keeps the
+ * bento rows from looking accidental.
+ */
 const ASPECT_CLASS = {
-  phone: "aspect-[3/4]",
-  wide: "aspect-[16/10]",
+  phone: "aspect-[4/5]",
+  wide: "aspect-[16/9]",
 } as const
 
 interface ScreenshotFrameProps {

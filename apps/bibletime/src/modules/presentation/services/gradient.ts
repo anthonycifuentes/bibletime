@@ -63,11 +63,16 @@ export const parseCssGradient = (value: string): GradientSpec | null => {
     const color = hexToRgba(stopMatch[1])
     if (!color) return null
 
+    // `.at()` rather than `[2]` because an unmatched optional group is
+    // `undefined` at runtime, which only `.at()`'s signature admits —
+    // `RegExpExecArray` indexing claims a plain `string`.
+    const rawPosition = stopMatch.at(2)
+
     stops.push({
       color,
       // Absent positions spread evenly, which is how CSS itself reads them.
       position: clampStopPosition(
-        stopMatch[2] !== undefined ? Number(stopMatch[2]) : (index / (parts.length - 1)) * 100
+        rawPosition === undefined ? (index / (parts.length - 1)) * 100 : Number(rawPosition)
       ),
     })
   }

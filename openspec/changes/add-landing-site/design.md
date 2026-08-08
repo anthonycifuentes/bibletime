@@ -71,7 +71,9 @@ This is what makes the screenshot promise real: `image: null` today renders the 
 
 ### 3. Expansion is CSS grid span + a View Transition, not a layout-animation library
 
-The grid is a plain CSS grid (`1` column on mobile, `2` on `md`, `4` on `lg`). A collapsed card spans its manifest size; the expanded card spans two columns and two rows. Toggling that is a class swap.
+The grid is a plain CSS grid (`1` column on mobile, `2` on `md`, `4` on `lg`). A collapsed card spans its manifest size; the expanded card takes the **whole row** and lays its content out horizontally — text beside a height-sized screenshot. Toggling that is a class swap.
+
+*(Amended during implementation. The first attempt spanned two columns and two rows, which looked right on paper and wrong on screen: rows here are sized by their content, so a card spanning two of them inherits its neighbours' heights and opens as a ~900px box that is mostly empty. Taking the full row lets the expanded card's own content decide how tall it gets.)*
 
 Grid placement is not an animatable property, so the size change itself is instantaneous by default; the *content* revealed inside the expanded card fades and slides in over ~180ms with `--ease-out-expo`. On top of that, the state update is wrapped in `document.startViewTransition` **when it exists**, which morphs the whole grid smoothly on browsers that support it and is a no-op everywhere else.
 
