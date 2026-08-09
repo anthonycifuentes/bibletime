@@ -9,6 +9,26 @@ Or skip installing entirely and use it in your browser at
 
 ---
 
+## Adding the browser version to your desktop
+
+The browser version can be added to your computer as an app — same thing, but in its own window
+with no tabs or address bar around it, and its own icon alongside everything else.
+
+On the landing page, click **Add it to your desktop**, next to the download buttons. Your browser
+asks once to confirm, and the app appears wherever your system keeps apps: the Dock on macOS, the
+Start menu on Windows, your applications list on Linux.
+
+That button appears in Chrome, Edge, and other Chromium browsers. **Safari and Firefox don't
+offer this**, so the button isn't shown there:
+
+- **Safari on macOS** — use **File** → **Add to Dock** instead. It does the same thing.
+- **Firefox** — no equivalent on desktop. Take the download.
+
+> This adds the **web** version. Same interface, but it needs a connection to load, and the media
+> library is desktop-only. For a fully offline console, take the download.
+
+---
+
 ## Which file do I download?
 
 | Your computer | File |

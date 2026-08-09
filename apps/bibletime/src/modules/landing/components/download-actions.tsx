@@ -8,6 +8,7 @@ import { useDetectedDownload } from "@/modules/landing/actions/use-detected-down
 import { CONSOLE_ROUTE, RELEASES_URL } from "@/modules/landing/lib/landing-content"
 import { DOWNLOAD_TARGETS, getDownloadTarget } from "@/modules/landing/lib/downloads"
 import { PlatformIcon } from "@/modules/landing/components/platform-icon"
+import { InstallAppButton } from "@/modules/landing/components/install-app-button"
 import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -68,6 +69,12 @@ export function DownloadActions() {
         >
           {t("landing.openInBrowser")}
         </Button>
+
+        {/* Third because it's the third answer to "how do I get this?", and in
+            the row rather than below it because a visitor who wants an icon on
+            their desktop is looking exactly here. Renders nothing in browsers
+            that don't offer an install prompt. */}
+        <InstallAppButton />
       </div>
 
       {primary ? (

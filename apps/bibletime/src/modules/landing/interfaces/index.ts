@@ -20,6 +20,24 @@ export interface DownloadTarget {
   url: string
 }
 
+/**
+ * How far "add it to your desktop" has got.
+ *
+ * - `unavailable` — no install prompt to offer. Either the browser doesn't do
+ *   this (Safari, Firefox) or the page hasn't qualified. Nothing renders.
+ * - `ready` — a prompt is in hand and the button is live.
+ * - `prompting` — the browser's dialog is up, waiting on the user.
+ * - `installed` — it went through, or the page is already running installed.
+ * - `dismissed` — the dialog was closed without installing. The prompt is
+ *   spent, so the button gives way to a line about the browser's own menu.
+ */
+export type InstallAppState =
+  | "unavailable"
+  | "ready"
+  | "prompting"
+  | "installed"
+  | "dismissed"
+
 export type LandingCardId =
   | "bible"
   | "songs"
