@@ -138,9 +138,24 @@ from a machine authenticated with `gh auth login`.
 > read-only workflow permissions, the `main` ruleset (id `20598630`, verified by a rejected
 > direct push), and the repository description/homepage/topics are all live.
 >
-> **One deliberate omission:** the ruleset was created **without** the `required_status_checks`
-> rule. CI cannot run while the GitHub account is locked for billing, so requiring a check that
-> can never report would make every PR unmergeable. Add it once Actions run again:
+> **Final ruleset state:** `deletion`, `non_fast_forward`, `pull_request`
+> (`required_approving_review_count: 0`), and `required_status_checks`
+> (`Lint, typecheck, build`), with **no bypass actors** — the rules apply to the owner too.
+>
+> The approval count is `0` rather than `1` because a sole maintainer cannot approve their own
+> PR, and requiring one made `main` unmergeable. The alternative — adding the admin role as a
+> bypass actor — would also have let the maintainer merge past a red CI run, which defeats the
+> point of the gate. Raise it back to `1` (and re-enable `require_code_owner_review`) the day a
+> second maintainer joins; `CODEOWNERS` is already in place for that.
+>
+> `allow_auto_merge` and `delete_branch_on_merge` are enabled, so `pnpm ship` can queue a PR to
+> squash-merge itself the moment CI passes without weakening any rule.
+>
+> <details><summary>Superseded: the interim ruleset had no status-check rule</summary>
+>
+> While the GitHub account was locked for billing, CI could not run, so requiring a check that
+> could never report would have made every PR unmergeable. The rule was added once Actions
+> worked again:
 >
 > ```bash
 > gh api -X PUT repos/anthonycifuentes/bibletime/rulesets/20598630 --input - <<'JSON'
@@ -154,6 +169,8 @@ from a machine authenticated with `gh auth login`.
 >     "required_status_checks": [ { "context": "Lint, typecheck, build" } ] } } ] }
 > JSON
 > ```
+>
+> </details>
 
 ```bash
 REPO=anthonycifuentes/bibletime
@@ -200,9 +217,9 @@ gh api -X POST "repos/$REPO/rulesets" --input - <<'JSON'
     {
       "type": "pull_request",
       "parameters": {
-        "required_approving_review_count": 1,
+        "required_approving_review_count": 0,
         "dismiss_stale_reviews_on_push": true,
-        "require_code_owner_review": true,
+        "require_code_owner_review": false,
         "require_last_push_approval": false,
         "required_review_thread_resolution": false,
         "allowed_merge_methods": ["squash", "merge", "rebase"]
