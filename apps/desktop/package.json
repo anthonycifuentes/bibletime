@@ -23,7 +23,7 @@
     "@types/node": "^22",
     "concurrently": "^10.0.4",
     "electron": "^43.2.0",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.15.3",
     "typescript": "^6",
     "wait-on": "^9.1.0"
   }
