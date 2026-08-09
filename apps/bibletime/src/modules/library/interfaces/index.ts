@@ -81,6 +81,19 @@ interface FolderItemOf<TType extends FolderItemType, TData> {
    * carry `items` wholesale already.
    */
   templateOverride?: Partial<SlideTemplate>
+  /**
+   * What the operator or speaker needs to remember at this point in the
+   * service — shown in the slideshow's notes pane and nowhere else. Never
+   * rendered on the slide, so it reaches neither the projected output nor
+   * the console's preview.
+   *
+   * Stored on the item for the same reason `templateOverride` is: folder
+   * saves, project autosave, and `ProjectFile` export/import all carry
+   * `items` wholesale, so persisting it costs no serializer changes.
+   * Absent means no notes; an emptied editor clears the field rather than
+   * storing `""`.
+   */
+  speakerNotes?: string
   data: TData
 }
 
@@ -214,11 +227,31 @@ export interface LiveSlidePayload {
   media?: MediaSlideData
   template: SlideTemplate
   /**
-   * When this slide was sent, stamped by `setLiveSlide`. Load-bearing, not
-   * diagnostic: `localStorage` fires a `storage` event only when the stored
-   * value actually changes, so re-sending the *same* slide would otherwise
-   * be a silent no-op in the output window. It also restarts video
-   * playback from zero on each send (see `mediaPlaybackKey`).
+   * Blanks the output to a solid field of this color, covering the slide.
+   *
+   * A field on the payload rather than an empty payload, because the slide
+   * has to survive being blanked: the output window keeps it mounted
+   * underneath, so restoring is instant, a video keeps playing behind the
+   * blank, and the entrance animation does not re-run. Sending an empty
+   * payload instead would discard the slide, making the restore a fresh
+   * send — restarting the very video the blank was covering.
+   *
+   * Toggling it is also what fires the `storage` event that carries it to
+   * the output window: it is part of the serialized payload, so changing it
+   * changes the stored string on its own. That is what lets `setLiveSlideBlank`
+   * leave `sentAt` alone, which in turn is what makes "blanking never
+   * restarts media" structural rather than a rule to remember.
+   */
+  blank?: "black" | "white"
+  /**
+   * When the *slide* was last sent, stamped by `setLiveSlide` and
+   * deliberately untouched by `setLiveSlideBlank`. Load-bearing twice over:
+   *
+   * `localStorage` fires a `storage` event only when the stored value
+   * actually changes, so re-sending the *same* slide would otherwise be a
+   * silent no-op in the output window. And because it moves on exactly the
+   * sends that are a new slide (or a deliberate re-send) and on nothing
+   * else, it is the media restart key — see `mediaPlaybackKey`.
    */
   sentAt?: number
 }

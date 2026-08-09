@@ -323,6 +323,38 @@ export const useLibrary = (activeProjectId: string | null) => {
     [allFolders, refresh]
   )
 
+  /**
+   * Sets (or clears) one slide's speaker notes — what the operator reads in
+   * the slideshow's notes pane, never something the congregation sees.
+   *
+   * Follows `applyStyleOverrideToItems`' rule for emptiness: notes that are
+   * blank (or only whitespace) *remove* the field rather than storing `""`,
+   * so "this slide has no notes" stays a single representable state and the
+   * notes pane's empty check is one truthiness test.
+   *
+   * Stamping `updatedAt` is what makes the edit durable beyond this render:
+   * `projectContentSignature` fingerprints folders by `id:updatedAt`, so
+   * this is also the write that tells autosave something changed.
+   */
+  const updateFolderItemNotes = useCallback(
+    async (folderId: string, itemId: string, notes: string) => {
+      const existing = allFolders.find((folder) => folder.id === folderId)
+      if (!existing) return
+
+      const speakerNotes = notes.trim()
+      const items = existing.items.map((item) => {
+        if (item.id !== itemId) return item
+        if (speakerNotes !== "") return { ...item, speakerNotes }
+        const { speakerNotes: _removed, ...withoutNotes } = item
+        return withoutNotes
+      })
+
+      await storage.save({ ...existing, items, updatedAt: Date.now() })
+      await refresh()
+    },
+    [allFolders, refresh]
+  )
+
   return {
     folders,
     isLoading,
@@ -339,5 +371,6 @@ export const useLibrary = (activeProjectId: string | null) => {
     reorderFolderItems,
     applyTemplateToItems,
     applyStyleOverrideToItems,
+    updateFolderItemNotes,
   }
 }

@@ -24,6 +24,7 @@ import {
   PaintBoardIcon,
   PencilEdit02Icon,
   PlayIcon,
+  StickyNote01Icon,
 } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
@@ -50,6 +51,8 @@ interface SlideCardProps {
   onRename: (itemId: string, label: string) => void
   /** Called from the card's context menu — opens the per-slide style editor for this one slide. */
   onEditStyle: (itemId: string) => void
+  /** Called from the card's context menu — opens the speaker-notes editor for this one slide. */
+  onEditNotes: (itemId: string) => void
 }
 
 /**
@@ -77,6 +80,7 @@ export function SlideCard({
   onDelete,
   onRename,
   onEditStyle,
+  onEditNotes,
 }: SlideCardProps) {
   const { t } = useTranslation()
   const { ratio } = useAspectRatio()
@@ -152,16 +156,28 @@ export function SlideCard({
             />
           </div>
 
-          <div className="bg-card px-3 py-2">
+          <div className="flex items-center gap-1.5 bg-card px-3 py-2">
             {/* Kept in flow while renaming so the card doesn't change height. */}
             <p
               className={cn(
-                "truncate text-sm font-medium text-foreground",
+                "min-w-0 flex-1 truncate text-sm font-medium text-foreground",
                 isRenaming && "invisible"
               )}
             >
               {content.caption || " "}
             </p>
+            {/* Marks the slide as carrying notes without spending caption
+                width on them — the notes themselves belong to the slideshow,
+                and must never be rendered onto the slide area above. */}
+            {item.speakerNotes && !isRenaming ? (
+              <HugeiconsIcon
+                icon={StickyNote01Icon}
+                size={14}
+                strokeWidth={2}
+                className="shrink-0 text-muted-foreground"
+                aria-label={t("library.slideHasNotes")}
+              />
+            ) : null}
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
@@ -182,6 +198,10 @@ export function SlideCard({
           <ContextMenuItem onClick={() => onEditStyle(item.id)}>
             <HugeiconsIcon icon={PaintBoardIcon} strokeWidth={2} />
             {t("library.editStyle")}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onEditNotes(item.id)}>
+            <HugeiconsIcon icon={StickyNote01Icon} strokeWidth={2} />
+            {t("library.slideNotes")}
           </ContextMenuItem>
           <ContextMenuItem variant="destructive" onClick={() => onDelete(item.id)}>
             <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
