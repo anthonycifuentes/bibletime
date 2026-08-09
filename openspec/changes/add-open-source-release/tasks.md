@@ -38,7 +38,7 @@
 - [x] 5.3 Install with `pnpm install --frozen-lockfile`; do **not** pass `--ignore-scripts` — the `allowBuilds` entries in `pnpm-workspace.yaml` need their postinstalls.
 - [x] 5.4 Add `pnpm lint`, `pnpm typecheck`, and `pnpm build` as three separate steps so a failure is attributable from the log.
 - [x] 5.5 Pin every third-party action to a full 40-character commit SHA with the version in a trailing comment.
-- [ ] 5.6 Push the branch and confirm the workflow runs green end to end; fix any lint/typecheck failures the local runs did not surface.
+- [x] 5.6 Pushed and confirmed green — run `31290784639` on PR #2 passed install, lint, typecheck, and build. (The first attempts failed at 5s with "account is locked due to a billing issue", which was a GitHub account lock, not a workflow defect; resolved by the maintainer.)
 
 ## 6. Packaging configuration
 
@@ -57,7 +57,7 @@
 - [x] 7.5 Add a publish job with `needs: build` and `permissions: { contents: write }` that downloads all artifacts and creates a **draft** release via a SHA-pinned `softprops/action-gh-release`.
 - [x] 7.6 Guard the publish job so a `workflow_dispatch` run builds artifacts but never creates a release.
 - [x] 7.7 Write the release-notes body: which asset to download per platform, the unsigned-build statement, and a link to `docs/install.md`.
-- [ ] 7.8 Dry-run via `workflow_dispatch` and confirm all three platforms build and upload artifacts, and that no release object is created.
+- [x] 7.8 Dry-run `31291705029` on `main` succeeded on all three platforms — macOS (506 MB of artifacts), Windows (110 MB), Linux (134 MB) — and the publish job was correctly **skipped**, so no release object was created. Note `workflow_dispatch` only works once the workflow is on the default branch, so this could not run until PR #2 merged.
 
 ## 8. Dependabot
 
