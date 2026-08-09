@@ -1,13 +1,14 @@
 version: 2
 
 updates:
-  # Dependencies across the whole pnpm workspace (root, apps/*, packages/*).
+  # Dependencies across the whole pnpm workspace.
+  #
+  # One root entry, not one per package: Dependabot reads pnpm-workspace.yaml
+  # and covers apps/* and packages/* from here. Listing the directories
+  # individually opened the same bump once per manifest — the first run
+  # produced four identical TypeScript PRs and four @types/node ones.
   - package-ecosystem: npm
-    directories:
-      - "/"
-      - "/apps/bibletime"
-      - "/apps/desktop"
-      - "/packages/ui"
+    directory: "/"
     schedule:
       interval: monthly
     open-pull-requests-limit: 5
