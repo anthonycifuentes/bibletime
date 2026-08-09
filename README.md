@@ -36,7 +36,7 @@ simple enough that a volunteer can use it without training, and fully usable wit
 
 | | |
 | --- | --- |
-| 📖 **Bible** | Browse by book → chapter → verse or jump to a reference. The Reina-Valera 1960 is bundled and offline; more translations download on demand. |
+| 📖 **Bible** | Browse by book → chapter → verse or jump to a reference. Reina-Valera 1960 is bundled; [**26 more translations**](#bible-translations) in English, Spanish, and Portuguese download for offline use. |
 | 🎵 **Songs** | Lyrics split into labeled sections (verse, chorus, bridge), with slide-by-slide navigation and next-slide preview while you sing. |
 | 🖼️ **Media** | Drag in images and video. Send them straight to the screen or use them as slide backgrounds. |
 | 📝 **Notes** | Template-based note slides for announcements and pre-service rotation. |
@@ -58,6 +58,47 @@ simple enough that a volunteer can use it without training, and fully usable wit
 
 **Presenting**
 ![The presentation view](./apps/bibletime/public/img/present.png)
+
+</details>
+
+---
+
+## Bible translations
+
+**Reina-Valera 1960** ships inside the app and works with no internet at all.
+
+Beyond that, open the **Bible** tab → **Version** and pick from **26 translations** in three
+languages. Downloading one stores it on your machine, so it works offline afterwards exactly like
+the bundled one. You only need a connection for the download itself.
+
+| Language | Available |
+| --- | --- |
+| 🇬🇧 **English** (7) | KJV · NKJV · NIV · ESV · NLT · CSB · NASB 2020 |
+| 🇪🇸 **Spanish** (12) | RVR1960 · RVC · RVA2015 · NVI (Español and Castellano) · NBLA · LBLA · NTV · DHH94I · DHHS94 · TLA · TLAI |
+| 🇵🇹 **Portuguese** (7) | ARA · ARC (Brasil and Portugal) · NAA · NVI · NTLH · A21 |
+
+The catalog is fetched live, so new translations appear without an app update. Browse it at
+**[mrk214.github.io/snapshots/data.json](https://mrk214.github.io/snapshots/data.json)**.
+
+<details>
+<summary><b>Where the data comes from</b></summary>
+
+BibleTime does not host Bible text. It reads the open JSON datasets published by
+[**@mrk214**](https://github.com/mrk214):
+
+| Repository | Language |
+| --- | --- |
+| [`bible-data-en-eng`](https://github.com/mrk214/bible-data-en-eng) | 🇬🇧 English |
+| [`bible-data-es-spa`](https://github.com/mrk214/bible-data-es-spa) | 🇪🇸 Spanish |
+| [`bible-data-pt-por`](https://github.com/mrk214/bible-data-pt-por) | 🇵🇹 Portuguese |
+
+[`reading-json-files`](https://github.com/mrk214/reading-json-files) is the reference
+implementation and carries the [TypeScript
+types](https://github.com/mrk214/reading-json-files/blob/main/src/types.ts) for the format.
+
+Translations downloaded this way are fetched by **you**, from a third party, at your request —
+they are not redistributed by this project, and each carries its own copyright. See
+[`docs/bible-data.md`](./docs/bible-data.md).
 
 </details>
 
