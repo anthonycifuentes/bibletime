@@ -9,24 +9,23 @@ Or skip installing entirely and use it in your browser at
 
 ---
 
-## Installing the browser version as an app
+## Adding the browser version to your desktop
 
-The browser version can also be installed — same app, but in its own window with no tabs or
-address bar around it, and its own icon next to everything else on your machine.
+The browser version can be added to your computer as an app — same thing, but in its own window
+with no tabs or address bar around it, and its own icon alongside everything else.
 
-On the landing page there's an **install** button under the download options. It's the browser's
-own button, not ours: the browser draws it, words it, and runs the install itself. Click it and
-the app appears wherever your system keeps apps.
+On the landing page, click **Add it to your desktop**, next to the download buttons. Your browser
+asks once to confirm, and the app appears wherever your system keeps apps: the Dock on macOS, the
+Start menu on Windows, your applications list on Linux.
 
-The button only shows up where the browser supports it. That's Chrome and Edge 148 and later,
-and today it needs to be switched on — either by the visitor at
-`about://flags/#web-app-install-element`, or by the deployment carrying an
-[origin trial](https://developer.chrome.com/origintrials) token (see
-[`architecture.md`](./architecture.md#the-install-element)). Everywhere else the page shows the
-downloads and nothing else — no broken button.
+That button appears in Chrome, Edge, and other Chromium browsers. **Safari and Firefox don't
+offer this**, so the button isn't shown there:
 
-> This installs the **web** version. It runs the same interface, but it needs a connection to
-> load, and the media library is desktop-only. For a fully offline console, take the download.
+- **Safari on macOS** — use **File** → **Add to Dock** instead. It does the same thing.
+- **Firefox** — no equivalent on desktop. Take the download.
+
+> This adds the **web** version. Same interface, but it needs a connection to load, and the media
+> library is desktop-only. For a fully offline console, take the download.
 
 ---
 

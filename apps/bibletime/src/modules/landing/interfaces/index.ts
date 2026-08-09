@@ -21,16 +21,22 @@ export interface DownloadTarget {
 }
 
 /**
- * Where the browser-rendered `<install>` button has got to.
+ * How far "add it to your desktop" has got.
  *
- * - `idle` — the button is up, nothing has happened yet.
- * - `installed` — the install went through, or the page is already running as
- *   an installed app.
- * - `dismissed` — the prompt was closed without installing. The button stays;
- *   only the line under it changes.
- * - `unavailable` — the browser declined to render a usable button.
+ * - `unavailable` — no install prompt to offer. Either the browser doesn't do
+ *   this (Safari, Firefox) or the page hasn't qualified. Nothing renders.
+ * - `ready` — a prompt is in hand and the button is live.
+ * - `prompting` — the browser's dialog is up, waiting on the user.
+ * - `installed` — it went through, or the page is already running installed.
+ * - `dismissed` — the dialog was closed without installing. The prompt is
+ *   spent, so the button gives way to a line about the browser's own menu.
  */
-export type WebInstallState = "idle" | "installed" | "dismissed" | "unavailable"
+export type InstallAppState =
+  | "unavailable"
+  | "ready"
+  | "prompting"
+  | "installed"
+  | "dismissed"
 
 export type LandingCardId =
   | "bible"

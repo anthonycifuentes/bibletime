@@ -126,46 +126,42 @@ Read the comments there before changing it:
 
 ---
 
-## The `<install>` element
+## Installing the web app
 
-The landing page offers the browser version as an installable app, using the HTML
-[`<install>` element](https://developer.chrome.com/blog/install-element) rather than the
-`beforeinstallprompt` dance. The element renders its own button — the browser owns the label, its
-wording, its language, and its appearance — which is what lets the browser treat the click as a
-genuine signal of intent, the same bargain the permission elements make.
+The landing page offers the browser version as an installable app, through
+`beforeinstallprompt`. There is a newer, tidier way to do this — the declarative
+[`<install>` element](https://developer.chrome.com/blog/install-element) — but it's behind a flag
+in Chromium and needs a per-origin origin trial token to reach real visitors, with the trial
+ending in Chrome 153. `beforeinstallprompt` is unglamorous and has shipped for years. That's the
+trade taken here.
 
 The moving parts:
 
 | Where | What |
 | --- | --- |
-| `apps/bibletime/public/manifest.json` | The `id` field. Without it a bare `<install>` has no app to point at. |
-| `src/types/install-element.d.ts` | `HTMLInstallElement` and the JSX tag — the element is too new to be in `@types/react` or `lib.dom`. |
-| `modules/landing/actions/use-web-install.ts` | Whether to render the tag at all, and what the browser reported afterwards. |
-| `modules/landing/components/web-install-button.tsx` | The tag, plus the line under it. Styles nothing inside it. |
-| `modules/core/lib/origin-trials.ts` + `routes/__root.tsx` | The origin trial token, from the environment. |
+| `apps/bibletime/public/manifest.json` | Name, icons, `start_url`, `id` — what Chromium checks before it offers anything. |
+| `src/types/before-install-prompt.d.ts` | `BeforeInstallPromptEvent`, absent from `lib.dom` because it isn't standard. |
+| `routes/__root.tsx` | An inline script that catches the event before hydration and parks it on `window`. |
+| `modules/landing/actions/use-install-app.ts` | The state machine: ready, prompting, installed, dismissed. |
+| `modules/landing/components/install-app-button.tsx` | An ordinary `Button`, in the row with the downloads. |
 
-The element needs no JavaScript, but *this page* uses a little: the tag is only rendered once the
-client has confirmed the browser implements it, that this isn't the Electron shell, and that the
-app isn't already installed. An unsupported browser gets no tag rather than an empty flex item,
-and the "Open it in the browser" button beside it is the real fallback.
+Two things about this are easy to get wrong:
 
-**Turning it on for visitors.** Chromium ships the element behind
-`about://flags/#web-app-install-element` until it graduates. To have it work for everyone else,
-[register an origin trial](https://developer.chrome.com/origintrials) for the deployed origin
-(Chrome and Edge 148–153, one token for both) and set the token in the build environment:
+- **The event fires before React hydrates.** On a landing page Chromium routinely decides the page
+  qualifies while the bundle is still evaluating, and an event nobody was listening for is a
+  button that never appears. Hence the inline script in the document head, next to the theme one,
+  rather than a `useEffect`.
+- **The prompt is single-use.** After `prompt()` resolves, the event is spent whatever the user
+  chose. On dismissal the button gives way to a line pointing at the browser's own menu instead of
+  staying up as a control that would do nothing.
 
-```bash
-VITE_INSTALL_ORIGIN_TRIAL_TOKEN=<token>
-```
+Safari and Firefox never fire the event, so the button doesn't render there at all — no dead
+control, and the desktop downloads are the better answer for those visitors regardless.
+`docs/install.md` names Safari's **File → Add to Dock** for anyone who wants the equivalent.
 
-It's read at build time, so it has to be set wherever the site is built, and it only works for
-the origin it was registered for. Unset, no `<meta http-equiv="origin-trial">` tag is emitted and
-the button simply doesn't appear for anyone who hasn't flipped the flag.
-
-> Installability itself needs no service worker — Chrome dropped that requirement in 112 on
-> desktop. It does mean the installed web app is *not* offline-capable: it's the same
-> connection-dependent browser build in its own window. Offline is what the desktop download is
-> for.
+> Installability needs no service worker — Chrome dropped that requirement in 112 on desktop. It
+> does mean the installed web app is *not* offline-capable: it's the same connection-dependent
+> browser build in its own window. Offline is what the desktop download is for.
 
 ---
 
