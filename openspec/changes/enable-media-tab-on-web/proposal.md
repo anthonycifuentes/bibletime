@@ -64,6 +64,6 @@ Reveal-in-file-manager (no OS integration), LibreOffice conversion, Google Slide
 - **`apps/bibletime/src/modules/core/interfaces`** — `MediaSlideKind` gains `"youtube"`; `MediaSlideData` gains the fields that kind needs.
 - **`apps/bibletime/src/modules/library`** — `resolve-folder-item-content.ts` and the slide/preview/output rendering path, for the new kind and for reference resolution in the `/present` window.
 - **`apps/desktop/src/main.ts`** — CSP and navigation rules widened for the YouTube embed frame only.
-- **Dependencies** — none added. `pdfjs-dist` is already a dependency; IndexedDB and the File System Access API are platform APIs.
+- **Dependencies** — one dev dependency: `vitest`, plus a `test` script, a `vitest.config.ts`, a turbo `test` task, and a CI step. The repo had no test runner, and three tasks in this change call for unit tests; the alternative was dropping them. No runtime dependency is added — `pdfjs-dist` was already one, and IndexedDB and the File System Access API are platform APIs.
 - **No breaking changes to stored data.** The reference format, `MediaSlideData`'s existing fields, and every desktop behavior are unchanged; `MediaSlideKind` widens, which is additive for readers.
 - **Browser support is uneven by design** — the feature degrades from "folder root" to "file list" rather than to "unavailable".
