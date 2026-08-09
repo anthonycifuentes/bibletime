@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LibraryIndexRouteImport } from './routes/library/index'
 import { Route as PresentIndexRouteImport } from './routes/present/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as SlideshowIndexRouteImport } from './routes/slideshow/index'
 import { Route as TemplatesTemplateIdRouteImport } from './routes/templates/$templateId'
 import { Route as TemplatesNewRouteImport } from './routes/templates/new'
 
@@ -36,6 +37,11 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SlideshowIndexRoute = SlideshowIndexRouteImport.update({
+  id: '/slideshow/',
+  path: '/slideshow/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TemplatesTemplateIdRoute = TemplatesTemplateIdRouteImport.update({
   id: '/templates/$templateId',
   path: '/templates/$templateId',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/library/': typeof LibraryIndexRoute
   '/present/': typeof PresentIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/slideshow/': typeof SlideshowIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/library': typeof LibraryIndexRoute
   '/present': typeof PresentIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/slideshow': typeof SlideshowIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/library/': typeof LibraryIndexRoute
   '/present/': typeof PresentIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/slideshow/': typeof SlideshowIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/library/'
     | '/present/'
     | '/settings/'
+    | '/slideshow/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/present'
     | '/settings'
+    | '/slideshow'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/library/'
     | '/present/'
     | '/settings/'
+    | '/slideshow/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   LibraryIndexRoute: typeof LibraryIndexRoute
   PresentIndexRoute: typeof PresentIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
+  SlideshowIndexRoute: typeof SlideshowIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/slideshow/': {
+      id: '/slideshow/'
+      path: '/slideshow'
+      fullPath: '/slideshow/'
+      preLoaderRoute: typeof SlideshowIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/templates/$templateId': {
       id: '/templates/$templateId'
       path: '/templates/$templateId'
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   LibraryIndexRoute: LibraryIndexRoute,
   PresentIndexRoute: PresentIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
+  SlideshowIndexRoute: SlideshowIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

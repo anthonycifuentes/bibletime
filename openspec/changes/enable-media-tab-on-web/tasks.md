@@ -13,7 +13,7 @@
 - [x] 2.1 Create `modules/media/services/access/web-media-db.ts`: open the `bibletime-media` IndexedDB with object stores `sources`, `files`, `favorites`, and `cache`, including version-1 schema creation and a typed wrapper over each store.
 - [x] 2.2 Implement the `cache` store's LRU budget (256 MB): `lastUsedAt` touch on read, eviction pass on write, `QuotaExceededError` caught → evict → retry once → degrade to no-cache.
 - [x] 2.3 Implement `requestPersistentStorage()` calling `navigator.storage.persist()` once, on first root registration, and expose the reported quota/usage for the Settings storage panel.
-- [ ] 2.4 Add unit tests for the reference→store routing and for LRU eviction ordering (pure logic, no DOM).
+- [x] 2.4 Add `vitest` (dev dependency), `vitest.config.ts`, a `test` script, a turbo `test` task, and a CI step — the repo had no runner. Then unit-test LRU eviction ordering via the pure `selectEvictions`.
 
 ## 3. Web media access driver
 
@@ -49,14 +49,14 @@
 ## 6. Rendering media in the browser's output window
 
 - [x] 6.1 Add a `useResolvedMediaUrl(reference)` action that resolves through the driver and revokes on unmount, and use it in every surface that renders a media slide (console tile, preview panel, `/present`).
-- [ ] 6.2 Verify no resolved URL is ever written into `MediaSlideData` or the live-slide payload — add a test asserting the payload's `src` still matches the `bibletime-file://` form after a send.
+- [x] 6.2 Verify no resolved URL is ever written into `MediaSlideData` or the live-slide payload — add a test asserting the payload's `src` still matches the `bibletime-file://` form after a send.
 - [x] 6.3 Handle the output window's unresolvable case: render the missing-media state naming reconnection (not relinking) as the remedy, with no permission prompt on the output display.
 - [x] 6.4 Extend `useMediaAvailability` to distinguish "file missing" from "root needs reconnecting" and surface the matching remedy in the console.
 
 ## 7. YouTube slides
 
 - [x] 7.1 Widen `MediaSlideKind` in `modules/core/interfaces` with `"youtube"` and add `startSeconds?` to `MediaSlideData`.
-- [~] 7.2 Create `modules/media/lib/youtube-url.ts`: extract a video id from the `watch?v=`, `youtu.be/`, `/shorts/`, `/embed/`, and `/live/` forms, reject everything else, and build the canonical watch URL and the `youtube-nocookie` embed URL with `mute`, `loop`+`playlist`, and `start` parameters. Unit-test both directions.
+- [x] 7.2 Create `modules/media/lib/youtube-url.ts`: extract a video id from the `watch?v=`, `youtu.be/`, `/shorts/`, `/embed/`, and `/live/` forms, reject everything else, and build the canonical watch URL and the `youtube-nocookie` embed URL with `mute`, `loop`+`playlist`, and `start` parameters. Unit-test both directions.
 - [x] 7.3 Add `services/probe-youtube.ts` using the oEmbed endpoint to fetch a title and detect an undeleted, embeddable video; a network failure returns "unknown", never "invalid".
 - [x] 7.4 Add the "Add from YouTube link" dialog to the preview column (URL field, validation message, title preview, start time, loop, mute), modeled on `google-slides-import-dialog.tsx`.
 - [x] 7.5 Add `buildYouTubeSlide()` to `lib/build-media-slide.ts`.

@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useNavigate } from "@tanstack/react-router"
 
 import { useConsoleStore } from "@/modules/library/actions/use-console-store"
 import { useProjectAutosave } from "@/modules/library/actions/use-project-autosave"
@@ -13,7 +14,8 @@ import { SlideStyleDialog } from "@/modules/library/components/slide-style-dialo
 import { getDescendantIds, getFolderDepth } from "@/modules/library/lib/build-folder-tree"
 import { resolveFolderItemContent } from "@/modules/library/lib/resolve-folder-item-content"
 import type { MediaSlideData } from "@/modules/media"
-import { setLiveSlide } from "@/modules/library/services"
+import { SlideNotesDialog } from "@/modules/library/components/slide-notes-dialog"
+import { getLiveSlide, openOutputWindow, setLiveSlide, setLiveSlideBlank } from "@/modules/library/services"
 import { readMediaDragPayload } from "@/modules/media"
 import { useTemplates } from "@/modules/templates"
 import { HeaderBar } from "@/modules/core/layout"
@@ -39,6 +41,7 @@ const MAX_FOLDER_DEPTH = 2
  */
 export function ConsoleView() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const projects = useProjects()
   const library = useLibrary(projects.activeId ?? null)
 
@@ -85,12 +88,31 @@ export function ConsoleView() {
     seedItemId: string
   } | null>(null)
 
+  /** Which slide the speaker-notes editor is open for, held here for the same reason `styleEditor` is: both the grid and the preview panel open it. */
+  const [notesEditorItemId, setNotesEditorItemId] = useState<string | null>(null)
+
+  /**
+   * Whether the output is currently blanked.
+   *
+   * Read once on mount rather than tracked live: a blank set from the
+   * slideshow outlives it, and after exiting there is nothing in the console
+   * that would otherwise say the projector is black. Read on mount is
+   * exactly when that matters — this component mounts on the way back from
+   * `/slideshow`.
+   */
+  const [outputBlank, setOutputBlank] = useState<"black" | "white" | null>(null)
+  useEffect(() => {
+    setOutputBlank(getLiveSlide()?.blank ?? null)
+  }, [])
+
   const styleEditorFolder = library.folders.find(
     (folder) => folder.id === styleEditor?.folderId
   )
   const styleEditorItem = styleEditorFolder?.items.find(
     (item) => item.id === styleEditor?.seedItemId
   )
+
+  const notesEditorItem = openedFolder?.items.find((item) => item.id === notesEditorItemId)
 
   const openStyleEditor = (
     folderId: string,
@@ -129,7 +151,46 @@ export function ConsoleView() {
       versionLabel: content.versionLabel,
       template: content.template,
     })
-    window.open("/present", "bibletime-present")
+    openOutputWindow()
+  }
+
+  /**
+   * Starts a slideshow over a folder's slides.
+   *
+   * The output window is opened *here*, synchronously inside the click that
+   * called this — `window.open` outside a user gesture is exactly what popup
+   * blockers stop, and on web the output window is a popup. So one gesture
+   * does all three things: open the window, send the starting slide, and
+   * navigate. Doing any of it in an effect after the route change would put
+   * the `window.open` outside the gesture and get it blocked.
+   *
+   * The starting slide is resolved the same way the slideshow itself seeds
+   * its cursor (the selection when it is in the deck, else the first), so
+   * the window's first paint already shows what the view will open on.
+   */
+  const startSlideshow = (folderId: string, seedItemId?: string) => {
+    const targetFolder = library.folders.find((candidate) => candidate.id === folderId)
+    const deck = targetFolder?.items ?? []
+    if (deck.length === 0) return
+
+    // `deck[0]` is guaranteed by the emptiness check above.
+    const seed = seedItemId ?? lastSelectedItemId
+    const startItem = deck.find((item) => item.id === seed) ?? deck[0]
+
+    if (folderId !== openFolderId) openFolder(folderId)
+    selectItem(startItem.id, { additive: false })
+
+    openOutputWindow()
+    const content = resolveFolderItemContent(startItem, templatesState.templates)
+    setLiveSlide({
+      text: content.text,
+      reference: content.reference,
+      versionLabel: content.versionLabel,
+      media: content.media,
+      template: content.template,
+    })
+
+    void navigate({ to: "/slideshow" })
   }
 
   /** Selects a slide card (marks it "ready to present" in the preview panel) and immediately sends it to the presentation output — the console grid's double-click shortcut. */
@@ -256,6 +317,7 @@ export function ConsoleView() {
                   void library.removeFolderItems(folderId, [itemId])
                 }
                 onEditItemStyle={onEditTreeItemStyle}
+                onStartSlideshow={(folderId) => startSlideshow(folderId)}
                 onDropMediaOnFolder={onDropMediaOnFolder}
                 activeProjectName={
                   projects.projects.find(
@@ -304,6 +366,10 @@ export function ConsoleView() {
                   if (openFolderId)
                     openStyleEditor(openFolderId, itemIds, seedItemId)
                 }}
+                onEditNotes={setNotesEditorItemId}
+                onStartSlideshow={() => {
+                  if (openFolderId) startSlideshow(openFolderId)
+                }}
               />
             </main>
 
@@ -311,6 +377,17 @@ export function ConsoleView() {
               <PreviewPanel
                 item={previewItem}
                 templates={templatesState.templates}
+                onEditNotes={setNotesEditorItemId}
+                onStartSlideshow={
+                  openFolderId && openedFolder?.items.length
+                    ? () => startSlideshow(openFolderId, previewItem?.id)
+                    : undefined
+                }
+                outputBlank={outputBlank}
+                onRestoreOutput={() => {
+                  setLiveSlideBlank(null)
+                  setOutputBlank(null)
+                }}
               />
             </aside>
           </div>
@@ -409,7 +486,7 @@ export function ConsoleView() {
             onPresentSong={(text, template) => {
               // No `reference` — a song slide projects its lyrics alone.
               setLiveSlide({ text, template })
-              window.open("/present", "bibletime-present")
+              openOutputWindow()
             }}
             onAddMedia={(slides, templateId) => addMediaSlides(slides, templateId, openFolderId)}
             onAddMediaFolder={(name, slides, templateId) => {
@@ -431,7 +508,7 @@ export function ConsoleView() {
                 templatesState.templates.find((saved) => saved.id === templateId)?.template ??
                 templatesState.activeTemplate
               setLiveSlide({ media: slide, template })
-              window.open("/present", "bibletime-present")
+              openOutputWindow()
             }}
             onAddNote={(data, templateId) => {
               if (openFolderId) {
@@ -470,7 +547,7 @@ export function ConsoleView() {
               // Unlike a song, an note keeps its heading on the
               // projected slide — it's the line that says what this is.
               setLiveSlide({ text, reference: heading, template })
-              window.open("/present", "bibletime-present")
+              openOutputWindow()
             }}
           />
         </ResizablePanel>
@@ -492,6 +569,23 @@ export function ConsoleView() {
               styleEditor.itemIds,
               override
             )
+          }
+        />
+      ) : null}
+
+      {/* Notes are always written for one slide in the open folder — unlike
+          the style editor, which can target a slide in a folder that is not
+          open (from the sidebar tree) and so has to carry a folder id. */}
+      {notesEditorItem && openFolderId ? (
+        <SlideNotesDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setNotesEditorItemId(null)
+          }}
+          item={notesEditorItem}
+          templates={templatesState.templates}
+          onSave={(notes) =>
+            void library.updateFolderItemNotes(openFolderId, notesEditorItem.id, notes)
           }
         />
       ) : null}

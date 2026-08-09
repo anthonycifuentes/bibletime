@@ -33,3 +33,35 @@ export const setLiveSlide = (payload: LiveSlidePayload): void => {
   if (!isBrowser) return
   window.localStorage.setItem(LIVE_SLIDE_STORAGE_KEY, JSON.stringify({ ...payload, sentAt: Date.now() }))
 }
+
+/**
+ * Blanks the output to a solid color, or restores it with `null`, leaving
+ * the slide itself untouched.
+ *
+ * Reads the stored payload and rewrites it with `blank` as the only
+ * difference — `sentAt` explicitly included. The output window keeps the
+ * same slide mounted, so restoring costs nothing: no re-send, no restarted
+ * video, no re-run entrance animation (see `LiveSlidePayload.blank`).
+ *
+ * Holding `sentAt` still is safe *because* `blank` is itself part of the
+ * serialized payload: changing it changes the stored string, which is all
+ * `localStorage` needs to fire a `storage` event. Nothing has to be
+ * artificially bumped, so the one field the output window keys media
+ * playback off never moves for a blank.
+ *
+ * A no-op when nothing has been sent yet — there is no slide to blank, and
+ * inventing an empty payload would put the output window into a state no
+ * send produced.
+ */
+export const setLiveSlideBlank = (blank: LiveSlidePayload["blank"] | null): void => {
+  if (!isBrowser) return
+
+  const current = getLiveSlide()
+  if (!current) return
+
+  const { blank: _previous, ...rest } = current
+  window.localStorage.setItem(
+    LIVE_SLIDE_STORAGE_KEY,
+    JSON.stringify(blank ? { ...rest, blank } : rest)
+  )
+}

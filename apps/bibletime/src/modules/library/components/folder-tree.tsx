@@ -32,6 +32,7 @@ import {
   GripVerticalIcon,
   PaintBoardIcon,
   PlayIcon,
+  Presentation01Icon,
 } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
@@ -70,6 +71,8 @@ interface FolderTreeProps {
   onDeleteItem: (itemId: string, folderId: string) => void
   /** Opens the per-slide style editor for a slide — a context-menu action. Takes the folder id because a tree slide need not live in the open folder. */
   onEditItemStyle: (itemId: string, folderId: string) => void
+  /** Presents a folder's slides as a slideshow — a folder context-menu action. Takes the folder id because the target need not be the open folder. */
+  onStartSlideshow: (folderId: string) => void
   /** Plain display name of the active project — switching/creating/deleting projects lives in the Projects tab, not here. */
   activeProjectName: string | undefined
   /** Files dropped from the Media tab's grid onto a folder row — appended to that folder, open or not. */
@@ -103,6 +106,7 @@ export function FolderTree({
   onPresentItem,
   onDeleteItem,
   onEditItemStyle,
+  onStartSlideshow,
   activeProjectName,
   onDropMediaOnFolder,
 }: FolderTreeProps) {
@@ -356,6 +360,13 @@ export function FolderTree({
           {rowContent}
         </ContextMenuTrigger>
         <ContextMenuContent>
+          <ContextMenuItem
+            disabled={folder.items.length === 0}
+            onClick={() => onStartSlideshow(folder.id)}
+          >
+            <HugeiconsIcon icon={Presentation01Icon} strokeWidth={2} />
+            {t("library.startSlideshow")}
+          </ContextMenuItem>
           <ContextMenuItem disabled={!canCreateSubfolder} onClick={() => startCreateSubfolder(folder)}>
             <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
             {t("library.newSubfolder")}

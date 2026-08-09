@@ -35,6 +35,7 @@ import {
   Add01Icon,
   Folder01Icon,
   Layers01Icon,
+  PlayIcon,
 } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
 
@@ -62,6 +63,10 @@ interface SlideConsoleProps {
    * resolves it from the last-selected slide.
    */
   onEditStyle: (itemIds: string[], seedItemId?: string) => void
+  /** Opens the speaker-notes editor for one slide — always a single slide, since notes are written per moment in the service. */
+  onEditNotes: (itemId: string) => void
+  /** Presents this folder's slides as a slideshow, starting from the last-selected one. */
+  onStartSlideshow: () => void
   /** Files dropped from the Media tab's grid — appended to this folder. */
   onDropMedia?: () => void
 }
@@ -88,6 +93,8 @@ export function SlideConsole({
   onRenameItem,
   onApplyTemplate,
   onEditStyle,
+  onEditNotes,
+  onStartSlideshow,
   onDropMedia,
 }: SlideConsoleProps) {
   const { t } = useTranslation()
@@ -255,6 +262,21 @@ export function SlideConsole({
     >
       <div className="flex shrink-0 items-center justify-between gap-2">
         <h1 className="truncate text-lg font-bold">{folder.name}</h1>
+        {/* The folder's headline action: everything else here edits slides,
+            this one runs them. Disabled rather than hidden on an empty
+            folder, so the affordance is discoverable before there is
+            anything to present. */}
+        <Button
+          type="button"
+          size="sm"
+          className="ml-auto"
+          disabled={folder.items.length === 0}
+          title={folder.items.length === 0 ? t("library.startSlideshowEmpty") : undefined}
+          onClick={onStartSlideshow}
+        >
+          <HugeiconsIcon icon={PlayIcon} strokeWidth={2} />
+          {t("library.startSlideshow")}
+        </Button>
         <OverflowActions
           primaryActions={[]}
           overflowActions={bulkActions}
@@ -295,6 +317,7 @@ export function SlideConsole({
                     onDelete={(itemId) => onRemove([itemId])}
                     onRename={onRenameItem}
                     onEditStyle={(itemId) => onEditStyle([itemId], itemId)}
+                    onEditNotes={onEditNotes}
                   />
                 ))}
               </div>
