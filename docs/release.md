@@ -72,7 +72,7 @@ Check each artifact before publishing:
 - [ ] `BibleTime-<version>-arm64.dmg` mounts and the app launches on Apple Silicon
 - [ ] `BibleTime-<version>-x64.dmg` mounts and the app launches on Intel (or under Rosetta)
 - [ ] `BibleTime-<version>-x64.exe` installs and runs on Windows
-- [ ] `BibleTime-<version>-x64.AppImage` runs on Linux after `chmod +x`
+- [ ] `BibleTime-<version>-x86_64.AppImage` runs on Linux after `chmod +x`
 - [ ] The app opens to the **console**, not the landing page
 - [ ] Bible, Songs, Media, and Notes tabs all load
 - [ ] Presenting to a second display works

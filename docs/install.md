@@ -16,7 +16,7 @@ Or skip installing entirely and use it in your browser at
 | Mac with Apple Silicon (M1/M2/M3/M4) | `BibleTime-<version>-arm64.dmg` |
 | Mac with an Intel processor | `BibleTime-<version>-x64.dmg` |
 | Windows | `BibleTime-<version>-x64.exe` |
-| Linux | `BibleTime-<version>-x64.AppImage` |
+| Linux | `BibleTime-<version>-x86_64.AppImage` |
 
 Not sure which Mac you have? Click the  menu → **About This Mac**. If it says "Apple M1"
 or similar, take the `arm64` file. If it says "Intel", take the `x64` one.
@@ -72,8 +72,8 @@ installers from small projects are a common false positive.
 AppImages are not executable when downloaded. Make it executable, then run it:
 
 ```bash
-chmod +x BibleTime-*-x64.AppImage
-./BibleTime-*-x64.AppImage
+chmod +x BibleTime-*-x86_64.AppImage
+./BibleTime-*-x86_64.AppImage
 ```
 
 Or via your file manager: right-click → **Properties** → **Permissions** → check *Allow

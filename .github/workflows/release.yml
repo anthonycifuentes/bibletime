@@ -102,7 +102,7 @@ jobs:
             | macOS (Apple Silicon) | `BibleTime-*-arm64.dmg` |
             | macOS (Intel) | `BibleTime-*-x64.dmg` |
             | Windows | `BibleTime-*-x64.exe` |
-            | Linux | `BibleTime-*-x64.AppImage` |
+            | Linux | `BibleTime-*-x86_64.AppImage` |
 
             ## Before you install
 
