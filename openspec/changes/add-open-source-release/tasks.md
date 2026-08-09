@@ -83,18 +83,18 @@
 
 ## 11. Repository settings
 
-- [ ] 11.1 Enable secret scanning and push protection.
-- [ ] 11.2 Enable private vulnerability reporting so `SECURITY.md`'s instructions work.
-- [ ] 11.3 Set default workflow permissions to read-only and disable Actions creating or approving pull requests.
-- [ ] 11.4 Create the `main` ruleset: pull request required with 1 approval and stale-review dismissal, required status check naming the CI job, block force-push (`non_fast_forward`), block branch deletion.
-- [ ] 11.5 Verify the ruleset by attempting a direct push to `main` and confirming it is rejected.
+- [x] 11.1 Enable secret scanning and push protection.
+- [x] 11.2 Enable private vulnerability reporting so `SECURITY.md`'s instructions work.
+- [x] 11.3 Set default workflow permissions to read-only and disable Actions creating or approving pull requests.
+- [x] 11.4 Create the `main` ruleset (id `20598630`) — PR required with 1 approval, stale-review dismissal, code-owner review, force-push and deletion blocked. **The required-status-check rule was deliberately omitted:** CI cannot run while the account is billing-locked, so requiring it would make every PR unmergeable. The command to add it back is in `docs/release.md`.
+- [x] 11.5 Verify the ruleset by attempting a direct push to `main` and confirming it is rejected.
 - [x] 11.6 Record the exact `gh api` commands used for 11.1–11.4 in `docs/release.md`.
 
 ## 12. Go public and cut v0.1.0
 
 - [ ] 12.1 Confirm sections 1–11 are merged to `main` and the audit in section 10 is clean.
 - [x] 12.2 ~~Flip repository visibility to public.~~ **Already public** — discovered 2026-08-09. The repo has been public since it was created on 2026-07-28 (verified: unauthenticated `api.github.com` request returns 200). The proposal and design were written assuming it was private; that premise was wrong. Consequences: the "irreversible one-way door" in design.md decision 7 is **already open**, the RVR1960 exposure is live now rather than prospective, and the protections in section 11 are overdue rather than pre-emptive — they should be applied first, not last.
-- [ ] 12.3 Set the repository description and topics, and add the website field pointing at `https://bibletime-app.vercel.app`.
+- [x] 12.3 Set the repository description and topics, and add the website field pointing at `https://bibletime-app.vercel.app`.
 - [ ] 12.4 Tag `v0.1.0` and push the tag.
 - [ ] 12.5 Watch the release workflow and confirm all three platform jobs succeed.
 - [ ] 12.6 Download the draft's artifacts and verify each: macOS arm64 and x64 DMGs mount and launch, the Windows NSIS installer runs, the Linux AppImage runs after `chmod +x`.

@@ -134,6 +134,27 @@ The workflow structure doesn't change; signing is additive. Until then,
 These live in GitHub, not in the repo, so they're recorded here to stay reproducible. Run them
 from a machine authenticated with `gh auth login`.
 
+> **Applied 2026-08-09.** Secret scanning + push protection, private vulnerability reporting,
+> read-only workflow permissions, the `main` ruleset (id `20598630`, verified by a rejected
+> direct push), and the repository description/homepage/topics are all live.
+>
+> **One deliberate omission:** the ruleset was created **without** the `required_status_checks`
+> rule. CI cannot run while the GitHub account is locked for billing, so requiring a check that
+> can never report would make every PR unmergeable. Add it once Actions run again:
+>
+> ```bash
+> gh api -X PUT repos/anthonycifuentes/bibletime/rulesets/20598630 --input - <<'JSON'
+> { "rules": [ { "type": "deletion" }, { "type": "non_fast_forward" },
+>   { "type": "pull_request", "parameters": { "required_approving_review_count": 1,
+>     "dismiss_stale_reviews_on_push": true, "require_code_owner_review": true,
+>     "require_last_push_approval": false, "required_review_thread_resolution": false,
+>     "allowed_merge_methods": ["squash","merge","rebase"] } },
+>   { "type": "required_status_checks", "parameters": {
+>     "strict_required_status_checks_policy": true,
+>     "required_status_checks": [ { "context": "Lint, typecheck, build" } ] } } ] }
+> JSON
+> ```
+
 ```bash
 REPO=anthonycifuentes/bibletime
 ```
