@@ -1,5 +1,25 @@
 import type { TranslationKey } from "@/modules/core/i18n"
 
+/**
+ * One downloadable installer. macOS is two entries because the Intel and
+ * Apple Silicon builds are not interchangeable — handing an Intel Mac the
+ * arm64 DMG produces an app that will not open.
+ */
+export type DownloadTargetId = "windows" | "macos-arm64" | "macos-x64" | "linux"
+
+/** The platform families the icon row and OS detection deal in. */
+export type PlatformFamily = "windows" | "macos" | "linux"
+
+export interface DownloadTarget {
+  id: DownloadTargetId
+  /** Platform name — "Windows", "macOS", "Linux". */
+  labelKey: TranslationKey
+  /** The qualifier under it — file type and architecture. */
+  hintKey: TranslationKey
+  /** Direct link to the release asset. */
+  url: string
+}
+
 export type LandingCardId =
   | "bible"
   | "songs"
