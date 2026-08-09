@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+#
+# One command from "I changed something" to "it's merged".
+#
+#   scripts/ship "fix(songs): stop the chorus repeating"
+#
+# Branches if you're on main, commits everything staged-or-not, pushes, opens a
+# PR, and turns on auto-merge — so GitHub squashes it in the moment CI goes
+# green and deletes the branch after. You don't wait around, and the CI gate on
+# `main` still applies.
+#
+# Flags:
+#   -d, --draft    open the PR as a draft and skip auto-merge (for review)
+#   -n, --no-auto  open a normal PR but don't auto-merge it
+#
+set -euo pipefail
+
+DRAFT=false
+AUTO=true
+MESSAGE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -d|--draft)   DRAFT=true; AUTO=false; shift ;;
+    -n|--no-auto) AUTO=false; shift ;;
+    -h|--help)    sed -n '3,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *)            MESSAGE="$1"; shift ;;
+  esac
+done
+
+if [[ -z "$MESSAGE" ]]; then
+  echo "usage: scripts/ship [-d|--draft] [-n|--no-auto] \"type(scope): description\"" >&2
+  exit 1
+fi
+
+cd "$(git rev-parse --show-toplevel)"
+
+# A branch name from the message: "fix(songs): stop the chorus" -> fix/stop-the-chorus
+type_prefix="${MESSAGE%%:*}"          # "fix(songs)"
+type_prefix="${type_prefix%%(*}"      # "fix"
+subject="${MESSAGE#*: }"
+slug=$(printf '%s' "$subject" \
+  | tr '[:upper:]' '[:lower:]' \
+  | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' \
+  | cut -c1-48)
+branch="${type_prefix:-chore}/${slug:-change}"
+
+current=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$current" == "main" ]]; then
+  echo "→ branching: $branch"
+  git checkout -b "$branch"
+else
+  branch="$current"
+  echo "→ already on $branch"
+fi
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  git add -A
+  git commit -q -m "$MESSAGE"
+  echo "→ committed"
+else
+  echo "→ nothing to commit, shipping existing commits"
+fi
+
+git push -q -u origin "$branch"
+echo "→ pushed"
+
+# Reuse an open PR for this branch if there is one.
+if url=$(gh pr view --json url -q .url 2>/dev/null); then
+  echo "→ PR exists: $url"
+else
+  args=(--base main --head "$branch" --title "$MESSAGE" --body "$MESSAGE" --fill-verbose)
+  $DRAFT && args+=(--draft)
+  url=$(gh pr create "${args[@]}" 2>/dev/null || gh pr create --base main --head "$branch" \
+        --title "$MESSAGE" --body "$MESSAGE" $($DRAFT && echo --draft))
+  echo "→ opened $url"
+fi
+
+if $AUTO; then
+  # Races the first check run; retry briefly until GitHub will accept it.
+  for _ in 1 2 3 4 5 6; do
+    if gh pr merge --auto --squash --delete-branch >/dev/null 2>&1; then
+      echo "→ auto-merge on — squashes as soon as CI is green"
+      break
+    fi
+    sleep 5
+  done || true
+fi
+
+echo
+echo "$url"
