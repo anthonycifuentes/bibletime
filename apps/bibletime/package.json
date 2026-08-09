@@ -50,7 +50,7 @@
     "eslint": "^9",
     "nitro": "npm:nitro-nightly@3.0.1-20260731-205209-52abde8a",
     "tsx": "^4.20.6",
-    "typescript": "^6",
+    "typescript": "^7",
     "vite": "^8"
   }
 }
