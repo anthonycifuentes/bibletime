@@ -210,6 +210,12 @@ export const en = {
   "library.dragToReorder": "Drag to reorder",
   "library.previewEmpty": "Select a slide to preview it here.",
   "library.sendToOutput": "Present",
+  "library.editStyle": "Edit style",
+  "library.editStyleTitle": "Edit slide style",
+  "library.editStyleDescription": "Changes apply to this slide only — no template is created or modified.",
+  "library.editStyleDescriptionMultiple": "Changes apply to the {{count}} selected slides only — no template is created or modified.",
+  "library.editStyleReset": "Use the template's style",
+  "library.save": "Save",
 
   "songs.searchPlaceholder": "Search songs",
   "songs.searchAriaLabel": "Search songs by title, author, or lyrics",
@@ -414,7 +420,7 @@ export const en = {
   "landing.card.templates.blurb": "Type, color, and backgrounds you set once.",
   "landing.card.templates.detail":
     "Build a template — fonts, sizes, alignment, colors, a background image or a gradient — and every slide made with it comes out matching. Change the template later and the slides follow, so a whole service restyles without touching a single slide.",
-  "landing.card.templates.alt": "The template editor with typography controls beside a live preview",
+  "landing.card.templates.alt": "The Templates tab showing saved templates beside slides using them",
 
   "landing.card.presentation.title": "A second screen that behaves",
   "landing.card.presentation.blurb": "Its own window for the projector, controlled from yours.",

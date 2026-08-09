@@ -30,6 +30,7 @@ import {
   FolderAddIcon,
   GalleryThumbnailsIcon,
   GripVerticalIcon,
+  PaintBoardIcon,
   PlayIcon,
 } from "@hugeicons/core-free-icons"
 import { useTranslation } from "@/modules/core/i18n"
@@ -67,6 +68,8 @@ interface FolderTreeProps {
   onPresentItem: (itemId: string, folderId: string) => void
   /** Removes a single slide — a context-menu action. */
   onDeleteItem: (itemId: string, folderId: string) => void
+  /** Opens the per-slide style editor for a slide — a context-menu action. Takes the folder id because a tree slide need not live in the open folder. */
+  onEditItemStyle: (itemId: string, folderId: string) => void
   /** Plain display name of the active project — switching/creating/deleting projects lives in the Projects tab, not here. */
   activeProjectName: string | undefined
   /** Files dropped from the Media tab's grid onto a folder row — appended to that folder, open or not. */
@@ -99,6 +102,7 @@ export function FolderTree({
   onPrepareItem,
   onPresentItem,
   onDeleteItem,
+  onEditItemStyle,
   activeProjectName,
   onDropMediaOnFolder,
 }: FolderTreeProps) {
@@ -262,6 +266,10 @@ export function FolderTree({
             <ContextMenuItem onClick={() => onPresentItem(item.id, owningFolderId)}>
               <HugeiconsIcon icon={PlayIcon} strokeWidth={2} />
               {t("library.present")}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => onEditItemStyle(item.id, owningFolderId)}>
+              <HugeiconsIcon icon={PaintBoardIcon} strokeWidth={2} />
+              {t("library.editStyle")}
             </ContextMenuItem>
             <ContextMenuItem variant="destructive" onClick={() => onDeleteItem(item.id, owningFolderId)}>
               <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />

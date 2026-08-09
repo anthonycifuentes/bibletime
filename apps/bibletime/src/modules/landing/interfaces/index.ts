@@ -12,7 +12,7 @@ export type LandingCardId =
  * One cell of the bento grid. Everything visible about a card is data —
  * the components only know how to render a `LandingCard`, never which card
  * they're rendering — so adding a screenshot is editing `image` here and
- * dropping the file in `public/landing/`, and nothing else.
+ * dropping the file in `public/img/`, and nothing else.
  */
 export interface LandingCard {
   id: LandingCardId
@@ -24,8 +24,12 @@ export interface LandingCard {
   altKey: TranslationKey
   /** `null` until a real screenshot exists — the frame renders its placeholder. */
   image: string | null
-  /** Shape of the screenshot frame: a tall app window or a wide one. */
-  aspect: "phone" | "wide"
+  /**
+   * Shape of the screenshot frame. `screen` is the app window's own 4:3;
+   * `wide` is 16:9, the shape of a slide; `phone` is the tall placeholder
+   * box a card without a screenshot falls back to.
+   */
+  aspect: "phone" | "screen" | "wide"
   /** How wide the card sits in the grid while collapsed. */
   span: "sm" | "md"
 }

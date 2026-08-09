@@ -5,12 +5,16 @@ import { useTranslation } from "@/modules/core/i18n"
 import { cn } from "@workspace/ui/lib/utils"
 
 /**
- * Chosen so a tall frame in a one-column cell and a wide frame in a
- * two-column cell come out roughly the same height — that's what keeps the
- * bento rows from looking accidental.
+ * `screen` is the app window's own ratio (1366×1024), so a window
+ * screenshot fills its frame exactly and nothing is cropped or
+ * letterboxed. `phone` is the tall box a card without a screenshot falls
+ * back to: in a one-column cell it lands at about the height a `screen`
+ * frame reaches in a two-column one, which is what keeps the bento rows
+ * from looking accidental.
  */
 const ASPECT_CLASS = {
   phone: "aspect-[4/5]",
+  screen: "aspect-[4/3]",
   wide: "aspect-[16/9]",
 } as const
 
@@ -43,7 +47,7 @@ export function ScreenshotFrame({ src, alt, aspect, className }: ScreenshotFrame
       )}
     >
       {src ? (
-        <img src={src} alt={alt} loading="lazy" className="size-full object-cover object-top" />
+        <img src={src} alt={alt} loading="lazy" className="size-full object-cover object-center" />
       ) : (
         <div className="flex size-full flex-col items-center justify-center gap-2 text-muted-foreground">
           <HugeiconsIcon icon={Image01Icon} strokeWidth={1.5} className="size-6 opacity-60" />

@@ -6,6 +6,8 @@ import {
   ANIMATED_BACKGROUND_REGISTRY,
   DEFAULT_GRADIENT_SPEC,
   FONT_REGISTRY,
+  MAX_FONT_SIZE,
+  MIN_FONT_SIZE,
   PRESET_BACKGROUNDS,
   applyGradientSpec,
   getAnimatedPreset,
@@ -47,6 +49,14 @@ interface TemplateEditorProps {
   template: SlideTemplate
   onChange: (patch: Partial<SlideTemplate>) => void
   onReset: () => void
+  /**
+   * Label for the reset button. Defaults to "reset this template to the app
+   * defaults", which is what resetting means when a whole template is being
+   * edited — the per-slide style dialog reuses this editor to edit an
+   * override, where the same button means "drop the override and go back to
+   * the template's style", so it supplies its own wording.
+   */
+  resetLabel?: string
   /** Whether the current storage driver can hold video background media locally (desktop only). */
   canUseVideoBackground: boolean
 }
@@ -73,7 +83,13 @@ function SettingRow({ label, children }: { label: string; children: ReactNode })
  * Built from the app's own design-system primitives (Card/Button/Select/
  * Input), not a copy of any reference tool's visual style.
  */
-export function TemplateEditor({ template, onChange, onReset, canUseVideoBackground }: TemplateEditorProps) {
+export function TemplateEditor({
+  template,
+  onChange,
+  onReset,
+  resetLabel,
+  canUseVideoBackground,
+}: TemplateEditorProps) {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const videoInputRef = useRef<HTMLInputElement | null>(null)
@@ -420,8 +436,8 @@ export function TemplateEditor({ template, onChange, onReset, canUseVideoBackgro
             value={template.fontSize}
             onChange={(value) => onChange({ fontSize: value })}
             step={2}
-            min={16}
-            max={96}
+            min={MIN_FONT_SIZE}
+            max={MAX_FONT_SIZE}
             formatValue={(value) => `${value}px`}
           />
 
@@ -540,7 +556,7 @@ export function TemplateEditor({ template, onChange, onReset, canUseVideoBackgro
       </Card>
 
       <Button type="button" variant="ghost" size="sm" onClick={onReset} className="self-start">
-        Restablecer plantilla
+        {resetLabel ?? "Restablecer plantilla"}
       </Button>
     </div>
   )

@@ -21,6 +21,7 @@ import {
   Delete02Icon,
   GalleryThumbnailsIcon,
   GripVerticalIcon,
+  PaintBoardIcon,
   PencilEdit02Icon,
   PlayIcon,
 } from "@hugeicons/core-free-icons"
@@ -47,6 +48,8 @@ interface SlideCardProps {
   onDelete: (itemId: string) => void
   /** Called from the card's context menu — renames this slide's caption. Only offered for song slides (see `canRenameCaption`). */
   onRename: (itemId: string, label: string) => void
+  /** Called from the card's context menu — opens the per-slide style editor for this one slide. */
+  onEditStyle: (itemId: string) => void
 }
 
 /**
@@ -73,6 +76,7 @@ export function SlideCard({
   onPresent,
   onDelete,
   onRename,
+  onEditStyle,
 }: SlideCardProps) {
   const { t } = useTranslation()
   const { ratio } = useAspectRatio()
@@ -170,6 +174,10 @@ export function SlideCard({
               {t("library.renameSlide")}
             </ContextMenuItem>
           ) : null}
+          <ContextMenuItem onClick={() => onEditStyle(item.id)}>
+            <HugeiconsIcon icon={PaintBoardIcon} strokeWidth={2} />
+            {t("library.editStyle")}
+          </ContextMenuItem>
           <ContextMenuItem variant="destructive" onClick={() => onDelete(item.id)}>
             <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
             {t("library.deleteSlide")}
