@@ -409,6 +409,10 @@ export const pt: Record<keyof typeof en, string> = {
   "landing.platform.macosIntel.hint": "macOS · Intel",
   "landing.platform.linux.hint": "Linux · AppImage, 64 bits",
   "landing.openInBrowser": "Abrir no navegador",
+  "landing.installHint":
+    "Ou instala-a como aplicação — a versão do navegador numa janela própria, sem separadores à volta.",
+  "landing.installDismissed": "Mudaste de ideias? O botão fica aqui.",
+  "landing.installDone": "Instalada. O BibleTime já está com as tuas outras aplicações.",
   "landing.expand": "Ver mais",
   "landing.collapse": "Ver menos",
   "landing.screenshotPending": "Imagem em breve",

@@ -20,6 +20,18 @@ export interface DownloadTarget {
   url: string
 }
 
+/**
+ * Where the browser-rendered `<install>` button has got to.
+ *
+ * - `idle` — the button is up, nothing has happened yet.
+ * - `installed` — the install went through, or the page is already running as
+ *   an installed app.
+ * - `dismissed` — the prompt was closed without installing. The button stays;
+ *   only the line under it changes.
+ * - `unavailable` — the browser declined to render a usable button.
+ */
+export type WebInstallState = "idle" | "installed" | "dismissed" | "unavailable"
+
 export type LandingCardId =
   | "bible"
   | "songs"

@@ -8,6 +8,7 @@ import { useDetectedDownload } from "@/modules/landing/actions/use-detected-down
 import { CONSOLE_ROUTE, RELEASES_URL } from "@/modules/landing/lib/landing-content"
 import { DOWNLOAD_TARGETS, getDownloadTarget } from "@/modules/landing/lib/downloads"
 import { PlatformIcon } from "@/modules/landing/components/platform-icon"
+import { WebInstallButton } from "@/modules/landing/components/web-install-button"
 import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -81,6 +82,12 @@ export function DownloadActions() {
           {t("landing.platforms")}
         </p>
       )}
+
+      {/* Sits with the other ways in, under the note about the download and
+          above the per-platform installers: it's the option for someone who
+          doesn't want a file at all. Renders nothing where the browser has
+          no `<install>` element, which today is most of them. */}
+      <WebInstallButton />
 
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium text-muted-foreground">

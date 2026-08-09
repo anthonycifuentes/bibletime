@@ -9,6 +9,27 @@ Or skip installing entirely and use it in your browser at
 
 ---
 
+## Installing the browser version as an app
+
+The browser version can also be installed — same app, but in its own window with no tabs or
+address bar around it, and its own icon next to everything else on your machine.
+
+On the landing page there's an **install** button under the download options. It's the browser's
+own button, not ours: the browser draws it, words it, and runs the install itself. Click it and
+the app appears wherever your system keeps apps.
+
+The button only shows up where the browser supports it. That's Chrome and Edge 148 and later,
+and today it needs to be switched on — either by the visitor at
+`about://flags/#web-app-install-element`, or by the deployment carrying an
+[origin trial](https://developer.chrome.com/origintrials) token (see
+[`architecture.md`](./architecture.md#the-install-element)). Everywhere else the page shows the
+downloads and nothing else — no broken button.
+
+> This installs the **web** version. It runs the same interface, but it needs a connection to
+> load, and the media library is desktop-only. For a fully offline console, take the download.
+
+---
+
 ## Which file do I download?
 
 | Your computer | File |

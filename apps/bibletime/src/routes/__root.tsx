@@ -1,6 +1,7 @@
 import { HeadContent, ScriptOnce, Scripts, createRootRoute } from "@tanstack/react-router"
 
 import { AppQueryProvider } from "@/modules/core/providers"
+import { INSTALL_ORIGIN_TRIAL_TOKEN } from "@/modules/core/lib"
 import { LocaleProvider, useTranslation } from "@/modules/core/i18n"
 import { ThemeProvider } from "@/modules/core/theme"
 import { AspectRatioProvider } from "@/modules/core/aspect-ratio"
@@ -74,6 +75,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Turns the `<install>` element on for real visitors while it's still
+            an origin trial — without it the element only exists for people who
+            flipped the flag themselves. Empty unless the deployment sets the
+            token, and the tag is then simply absent. */}
+        {INSTALL_ORIGIN_TRIAL_TOKEN ? (
+          <meta httpEquiv="origin-trial" content={INSTALL_ORIGIN_TRIAL_TOKEN} />
+        ) : null}
         {/* Sets the `dark` class before first paint (from the stored theme
             preference) so there's no flash of the wrong theme on load. */}
         <ScriptOnce>

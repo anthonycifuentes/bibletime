@@ -405,6 +405,10 @@ export const en = {
   "landing.platform.macosIntel.hint": "macOS · Intel",
   "landing.platform.linux.hint": "Linux · AppImage, 64-bit",
   "landing.openInBrowser": "Open it in the browser",
+  "landing.installHint":
+    "Or install it as an app — the browser version in its own window, no tabs around it.",
+  "landing.installDismissed": "Changed your mind? The button stays here.",
+  "landing.installDone": "Installed. BibleTime is with the rest of your apps now.",
   "landing.expand": "See more",
   "landing.collapse": "Show less",
   "landing.screenshotPending": "Screenshot coming soon",

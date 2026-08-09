@@ -126,6 +126,49 @@ Read the comments there before changing it:
 
 ---
 
+## The `<install>` element
+
+The landing page offers the browser version as an installable app, using the HTML
+[`<install>` element](https://developer.chrome.com/blog/install-element) rather than the
+`beforeinstallprompt` dance. The element renders its own button — the browser owns the label, its
+wording, its language, and its appearance — which is what lets the browser treat the click as a
+genuine signal of intent, the same bargain the permission elements make.
+
+The moving parts:
+
+| Where | What |
+| --- | --- |
+| `apps/bibletime/public/manifest.json` | The `id` field. Without it a bare `<install>` has no app to point at. |
+| `src/types/install-element.d.ts` | `HTMLInstallElement` and the JSX tag — the element is too new to be in `@types/react` or `lib.dom`. |
+| `modules/landing/actions/use-web-install.ts` | Whether to render the tag at all, and what the browser reported afterwards. |
+| `modules/landing/components/web-install-button.tsx` | The tag, plus the line under it. Styles nothing inside it. |
+| `modules/core/lib/origin-trials.ts` + `routes/__root.tsx` | The origin trial token, from the environment. |
+
+The element needs no JavaScript, but *this page* uses a little: the tag is only rendered once the
+client has confirmed the browser implements it, that this isn't the Electron shell, and that the
+app isn't already installed. An unsupported browser gets no tag rather than an empty flex item,
+and the "Open it in the browser" button beside it is the real fallback.
+
+**Turning it on for visitors.** Chromium ships the element behind
+`about://flags/#web-app-install-element` until it graduates. To have it work for everyone else,
+[register an origin trial](https://developer.chrome.com/origintrials) for the deployed origin
+(Chrome and Edge 148–153, one token for both) and set the token in the build environment:
+
+```bash
+VITE_INSTALL_ORIGIN_TRIAL_TOKEN=<token>
+```
+
+It's read at build time, so it has to be set wherever the site is built, and it only works for
+the origin it was registered for. Unset, no `<meta http-equiv="origin-trial">` tag is emitted and
+the button simply doesn't appear for anyone who hasn't flipped the flag.
+
+> Installability itself needs no service worker — Chrome dropped that requirement in 112 on
+> desktop. It does mean the installed web app is *not* offline-capable: it's the same
+> connection-dependent browser build in its own window. Offline is what the desktop download is
+> for.
+
+---
+
 ## Local-first, and the one exception
 
 Content, media, and service plans live on the user's machine. There is no account system, no
