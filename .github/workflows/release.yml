@@ -111,6 +111,10 @@ jobs:
             your operating system will warn you that the app is unrecognized.
             The app is not broken and this is expected.
 
+            On macOS 15 and newer, Control-click → Open no longer works — use
+            **System Settings → Privacy & Security → Open Anyway**, or run
+            `xattr -dr com.apple.quarantine /Applications/BibleTime.app`.
+
             Each platform's warning, and the exact steps to get past it, are in
             **[the installation guide](https://github.com/anthonycifuentes/bibletime/blob/main/docs/install.md)**.
 

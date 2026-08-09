@@ -37,24 +37,41 @@ You only need to do the following **once**, the first time you open the app.
 
 ### macOS
 
-You'll see: *"BibleTime is damaged and can't be opened"* or *"cannot be opened because the
-developer cannot be verified."*
+You'll see *"BibleTime can't be opened because Apple cannot check it for malicious software."*
 
 1. Open the `.dmg` and drag **BibleTime** into your **Applications** folder.
-2. Open your **Applications** folder.
-3. **Right-click** (or Control-click) BibleTime → **Open**.
-4. Click **Open** in the dialog.
+2. Open it once from **Applications**. macOS refuses — click **Done**.
+3. Go to  → **System Settings** → **Privacy & Security**.
+4. Scroll to the **Security** section. There's a line about BibleTime being blocked, with an
+   **Open Anyway** button. Click it.
+5. Confirm with Touch ID or your password, then open the app again.
 
-Right-clicking matters — double-clicking gives you a dialog with no "open anyway" option.
+> **On macOS 15 (Sequoia) and newer, Control-clicking → Open no longer works.** Apple removed
+> that shortcut, so System Settings is the only route through the interface. Older guides — and
+> earlier versions of this one — still say to right-click; that advice is out of date.
 
-If macOS still refuses, clear the quarantine flag from Terminal:
+Or do it in one line from Terminal, which works on every macOS version:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/BibleTime.app
 ```
 
-That attribute is what macOS attaches to anything downloaded from the internet. Removing it
-tells macOS you trust this particular app.
+`com.apple.quarantine` is the flag macOS attaches to anything a browser downloads. Removing it
+says you trust this particular app, and it opens normally from then on.
+
+<details>
+<summary><b>If you see "BibleTime is damaged and can't be opened"</b></summary>
+
+That exact wording means you have a build from **v0.1.0**, which had a packaging defect: the app
+bundle was left unsealed, so macOS treated it as corrupted rather than merely unsigned — a dead
+end with no **Open Anyway** button at all.
+
+**Fixed in v0.1.1.** [Download the current release](https://github.com/anthonycifuentes/bibletime/releases/latest).
+
+To rescue a copy you already have, clear the quarantine flag with the `xattr` command above — it
+works on the v0.1.0 build too.
+
+</details>
 
 ### Windows
 
