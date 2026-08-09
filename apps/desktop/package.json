@@ -2,7 +2,7 @@
   "name": "desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "BibleTime \u2014 a local-first presentation app for churches and ministries.",
+  "description": "BibleTime — a local-first presentation app for churches and ministries.",
   "author": "Anthony Cifuentes",
   "license": "MIT",
   "homepage": "https://bibletime-app.vercel.app",
@@ -20,11 +20,11 @@
     "package": "pnpm --filter web build && pnpm run build && electron-builder --config electron-builder.yml"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^26.2.0",
     "concurrently": "^10.0.4",
     "electron": "^43.2.0",
-    "electron-builder": "^25.1.8",
-    "typescript": "^6",
+    "electron-builder": "^26.15.3",
+    "typescript": "^6.0.3",
     "wait-on": "^9.1.0"
   }
 }
