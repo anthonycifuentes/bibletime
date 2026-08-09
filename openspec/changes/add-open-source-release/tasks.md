@@ -92,8 +92,8 @@
 
 ## 12. Go public and cut v0.1.0
 
-- [ ] 12.1 Confirm sections 1–11 are merged to `main` and the audit in section 10 is clean. This is the irreversible step — do not proceed on an unresolved finding.
-- [ ] 12.2 Flip repository visibility to public.
+- [ ] 12.1 Confirm sections 1–11 are merged to `main` and the audit in section 10 is clean.
+- [x] 12.2 ~~Flip repository visibility to public.~~ **Already public** — discovered 2026-08-09. The repo has been public since it was created on 2026-07-28 (verified: unauthenticated `api.github.com` request returns 200). The proposal and design were written assuming it was private; that premise was wrong. Consequences: the "irreversible one-way door" in design.md decision 7 is **already open**, the RVR1960 exposure is live now rather than prospective, and the protections in section 11 are overdue rather than pre-emptive — they should be applied first, not last.
 - [ ] 12.3 Set the repository description and topics, and add the website field pointing at `https://bibletime-app.vercel.app`.
 - [ ] 12.4 Tag `v0.1.0` and push the tag.
 - [ ] 12.5 Watch the release workflow and confirm all three platform jobs succeed.

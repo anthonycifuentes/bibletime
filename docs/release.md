@@ -291,6 +291,12 @@ All four must come back clean (or explained) before the visibility flip.
 
 ## Going public
 
+> **The repository is already public.** Verified 2026-08-09 — it has been public since it was
+> created on 2026-07-28. Step 5 below is therefore already done, and the ordering advice is now
+> about *catching up* rather than sequencing a flip: **apply the protections in the section above
+> first**, because `main` is currently public and unprotected. The RVR1960 licensing exposure
+> described in [`bible-data.md`](./bible-data.md) is live, not prospective.
+
 Order matters. Each step assumes the previous one is done.
 
 1. Merge all license, docs, template, and workflow changes to `main`.
