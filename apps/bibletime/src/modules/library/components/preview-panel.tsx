@@ -34,7 +34,7 @@ interface PreviewPanelProps {
 export function PreviewPanel({ item, templates, onRelinkMedia }: PreviewPanelProps) {
   const { t } = useTranslation()
   const content = item ? resolveFolderItemContent(item, templates) : undefined
-  const { isMissing, relink } = useMediaAvailability(content?.media)
+  const { isMissing, missingReason, url: mediaUrl, relink } = useMediaAvailability(content?.media)
   const [relinkNotice, setRelinkNotice] = useState<string | null>(null)
 
   const handleRelink = async () => {
@@ -55,20 +55,21 @@ export function PreviewPanel({ item, templates, onRelinkMedia }: PreviewPanelPro
         <SlideFrame
           template={content?.template ?? DEFAULT_SLIDE_TEMPLATE}
           media={content?.media}
+          mediaUrl={mediaUrl}
           isMediaMissing={isMissing}
           text={content?.text}
           reference={content?.reference}
           versionLabel={content?.versionLabel}
           emptyMessage={
             content?.media && isMissing
-              ? t("media.missingFile")
+              ? t(missingReason === "needs-reconnect" ? "media.needsReconnect" : "media.missingFile")
               : (content?.emptyMessage ?? t("library.previewEmpty"))
           }
           frameClassName="h-full w-full"
         />
       </div>
 
-      {content?.media && isMissing ? (
+      {content?.media && isMissing && missingReason === "file-missing" ? (
         <div className="flex flex-col gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => void handleRelink()}>
             {t("media.relink")}

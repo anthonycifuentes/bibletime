@@ -7,6 +7,7 @@ import { AspectRatioPicker } from "@/modules/settings/components/aspect-ratio-pi
 import { ProjectStoragePanel } from "@/modules/settings/components/project-storage-panel"
 import { MediaStoragePanel } from "@/modules/settings/components/media-storage-panel"
 import { SystemInfoPanel } from "@/modules/settings/components/system-info-panel"
+import { UpdatesPanel } from "@/modules/updates"
 import { DonatePanel } from "@/modules/settings/components/donate-panel"
 import { Button } from "@workspace/ui/components/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
@@ -80,6 +81,16 @@ export function SettingsView() {
         </CardHeader>
         <CardContent>
           <MediaStoragePanel />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("settings.updates.label")}</CardTitle>
+          <CardDescription>{t("settings.updates.description")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <UpdatesPanel />
         </CardContent>
       </Card>
 

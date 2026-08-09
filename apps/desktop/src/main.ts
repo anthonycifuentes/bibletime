@@ -1327,6 +1327,360 @@ function registerAppInfoHandlers() {
 }
 
 /**
+ * `/latest` already excludes drafts and prereleases, which is exactly what
+ * we want to advertise — so no client-side filtering is needed to get the
+ * newest release a user should actually be running.
+ *
+ * A consequence worth knowing: the release workflow attaches installers to
+ * a *draft* release for the maintainer to verify. Update checks stay blind
+ * to a release until it is published.
+ */
+const GITHUB_LATEST_RELEASE_URL =
+  "https://api.github.com/repos/anthonycifuentes/bibletime/releases/latest"
+
+/**
+ * Asset URLs are remote input. Even though they arrive from the releases
+ * API, they are checked against this list before anything is fetched, so a
+ * compromised release can never point the downloader at another host.
+ */
+const ALLOWED_DOWNLOAD_HOSTS = new Set(["api.github.com", "github.com", "objects.githubusercontent.com"])
+
+/** Ceiling on how often progress ticks cross the IPC boundary — a 150 MB installer is thousands of chunks. */
+const DOWNLOAD_PROGRESS_INTERVAL_MS = 200
+
+/** Mirrors `UpdateAsset` in the renderer's `modules/updates/interfaces` — see the note on `Song`/`Folder` above for why it's redeclared rather than imported. */
+interface UpdateAsset {
+  name: string
+  url: string
+  bytes: number | null
+}
+
+type UpdateCheckResult =
+  | { status: "up-to-date"; currentVersion: string; checkedAt: number }
+  | {
+      status: "available"
+      currentVersion: string
+      availableVersion: string
+      releaseUrl: string
+      releaseNotes: string
+      asset: UpdateAsset | null
+      checkedAt: number
+    }
+  | { status: "failed"; currentVersion: string; reason: "offline" | "rate-limited" | "unexpected" }
+
+type UpdateDownloadOutcome =
+  | { status: "completed"; fileName: string; filePath: string }
+  | { status: "cancelled" }
+  | { status: "failed"; detail: string }
+
+interface UpdatesFile {
+  lastCheckedAt: number | null
+  lastSeenVersion: string | null
+  dismissedVersion: string | null
+}
+
+/** The subset of GitHub's release payload this app reads. */
+interface GithubRelease {
+  tag_name?: string
+  html_url?: string
+  body?: string
+  draft?: boolean
+  prerelease?: boolean
+  assets?: { name?: string; browser_download_url?: string; size?: number }[]
+}
+
+const updatesStatePath = path.join(app.getPath("userData"), "updates.json")
+
+async function readUpdatesState(): Promise<UpdatesFile> {
+  try {
+    const raw = await fs.readFile(updatesStatePath, "utf8")
+    const parsed = JSON.parse(raw) as Partial<UpdatesFile>
+    return {
+      lastCheckedAt: parsed.lastCheckedAt ?? null,
+      lastSeenVersion: parsed.lastSeenVersion ?? null,
+      dismissedVersion: parsed.dismissedVersion ?? null,
+    }
+  } catch {
+    return { lastCheckedAt: null, lastSeenVersion: null, dismissedVersion: null }
+  }
+}
+
+async function writeUpdatesState(state: UpdatesFile) {
+  await fs.writeFile(updatesStatePath, JSON.stringify(state, null, 2), "utf8")
+}
+
+/**
+ * Orders two `MAJOR.MINOR.PATCH` versions, returning <0, 0, or >0.
+ *
+ * Numeric segments compare as numbers (so 0.10.0 beats 0.9.0, which a
+ * string compare gets backwards), a leading `v` is ignored so release tags
+ * compare directly against `app.getVersion()`, and any `-suffix` build
+ * sorts below the plain release of the same number.
+ *
+ * Hand-rolled rather than pulling in `semver`: these are the only tags this
+ * project produces, and the main process has no other use for the package.
+ */
+function compareVersions(a: string, b: string): number {
+  const parse = (value: string) => {
+    const [core = "", ...rest] = value.trim().replace(/^v/i, "").split("-")
+    return {
+      segments: core.split(".").map((segment) => Number.parseInt(segment, 10) || 0),
+      prerelease: rest.join("-"),
+    }
+  }
+
+  const left = parse(a)
+  const right = parse(b)
+
+  for (let index = 0; index < Math.max(left.segments.length, right.segments.length); index += 1) {
+    const difference = (left.segments[index] ?? 0) - (right.segments[index] ?? 0)
+    if (difference !== 0) return difference < 0 ? -1 : 1
+  }
+
+  if (left.prerelease === right.prerelease) return 0
+  // A prerelease is always below the plain release it leads up to.
+  if (!left.prerelease) return 1
+  if (!right.prerelease) return -1
+  return left.prerelease < right.prerelease ? -1 : 1
+}
+
+/**
+ * Picks the release asset that will actually run here.
+ *
+ * Matched on the *shape* of the name — extension plus, on macOS, the arch
+ * token — rather than the full `artifactName` template from
+ * electron-builder.yml, so renaming the product or the template doesn't
+ * silently stop every installed copy from finding its update.
+ *
+ * `.dmg` over `.zip` on macOS: the dmg is what the install guide tells
+ * people to double-click. The zip exists for electron-updater, which this
+ * app can't use while it ships unsigned.
+ */
+function selectUpdateAsset(assets: GithubRelease["assets"]): UpdateAsset | null {
+  const candidates = (assets ?? []).filter(
+    (asset): asset is { name: string; browser_download_url: string; size?: number } =>
+      typeof asset.name === "string" && typeof asset.browser_download_url === "string"
+  )
+
+  const endsWith = (extension: string, arch?: string) =>
+    candidates.find((asset) => {
+      const name = asset.name.toLowerCase()
+      return name.endsWith(extension) && (arch === undefined || name.includes(arch))
+    })
+
+  const match =
+    process.platform === "darwin"
+      ? endsWith(".dmg", process.arch === "arm64" ? "arm64" : "x64")
+      : process.platform === "win32"
+        ? endsWith(".exe")
+        : process.platform === "linux"
+          ? endsWith(".appimage")
+          : undefined
+
+  // A release with nothing for this platform is a real state (a build that
+  // failed on one runner), and the UI falls back to the release page.
+  if (!match) return null
+  if (!isSafeAssetName(match.name) || !isAllowedDownloadUrl(match.browser_download_url)) return null
+
+  return {
+    name: match.name,
+    url: match.browser_download_url,
+    bytes: typeof match.size === "number" ? match.size : null,
+  }
+}
+
+/** The asset name becomes a filename, so it must be a bare basename and nothing else. */
+function isSafeAssetName(name: string): boolean {
+  return (
+    name.length > 0 &&
+    !name.includes("/") &&
+    !name.includes("\\") &&
+    !name.includes("..") &&
+    path.basename(name) === name
+  )
+}
+
+function isAllowedDownloadUrl(rawUrl: string): boolean {
+  try {
+    const url = new URL(rawUrl)
+    return url.protocol === "https:" && ALLOWED_DOWNLOAD_HOSTS.has(url.hostname)
+  } catch {
+    return false
+  }
+}
+
+/** The one in-flight installer download, if any. Only one runs at a time. */
+let activeUpdateDownload: { controller: AbortController; partPath: string } | null = null
+
+/** Where the last completed download landed, so "reveal" works after the panel is reopened. */
+let completedUpdateDownloadPath: string | null = null
+
+function registerUpdateHandlers() {
+  ipcMain.handle("updates:get-state", async () => ({
+    ...(await readUpdatesState()),
+    currentVersion: app.getVersion(),
+  }))
+
+  ipcMain.handle("updates:check", async (): Promise<UpdateCheckResult> => {
+    const currentVersion = app.getVersion()
+
+    let release: GithubRelease
+    try {
+      const response = await net.fetch(GITHUB_LATEST_RELEASE_URL, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          // Same convention as the LRCLIB song search — an unattributed
+          // request to a public API is a request waiting to be blocked.
+          "User-Agent": `BibleTime v${currentVersion} (https://github.com/anthonycifuentes/bibletime)`,
+        },
+      })
+
+      if (!response.ok) {
+        console.warn(`Update check failed: ${response.status} ${response.statusText}`)
+        return {
+          status: "failed",
+          currentVersion,
+          // GitHub answers an exhausted unauthenticated quota with 403.
+          reason: response.status === 403 || response.status === 429 ? "rate-limited" : "unexpected",
+        }
+      }
+
+      release = (await response.json()) as GithubRelease
+    } catch (error) {
+      // Nothing reached the network, or the body wasn't JSON. Either way the
+      // user didn't ask for this check, so it stays quiet.
+      console.warn("Update check failed:", error)
+      return { status: "failed", currentVersion, reason: "offline" }
+    }
+
+    const tag = release.tag_name
+    if (typeof tag !== "string" || tag.trim().length === 0) {
+      console.warn("Update check failed: release payload has no usable tag_name")
+      return { status: "failed", currentVersion, reason: "unexpected" }
+    }
+
+    const checkedAt = Date.now()
+    const availableVersion = tag.trim().replace(/^v/i, "")
+    const persisted = await readUpdatesState()
+
+    // `/latest` already excludes these; this only fires if that ever changes.
+    if (release.draft || release.prerelease) {
+      await writeUpdatesState({ ...persisted, lastCheckedAt: checkedAt })
+      return { status: "up-to-date", currentVersion, checkedAt }
+    }
+
+    await writeUpdatesState({ ...persisted, lastCheckedAt: checkedAt, lastSeenVersion: availableVersion })
+
+    // Strictly greater only: a locally built 0.3.0-dev must never be told to
+    // "update" down to the published 0.2.0.
+    if (compareVersions(availableVersion, currentVersion) <= 0) {
+      return { status: "up-to-date", currentVersion, checkedAt }
+    }
+
+    return {
+      status: "available",
+      currentVersion,
+      availableVersion,
+      releaseUrl: release.html_url ?? "https://github.com/anthonycifuentes/bibletime/releases/latest",
+      releaseNotes: release.body ?? "",
+      asset: selectUpdateAsset(release.assets),
+      checkedAt,
+    }
+  })
+
+  ipcMain.handle("updates:dismiss", async (_event, version: string) => {
+    const state = await readUpdatesState()
+    await writeUpdatesState({ ...state, dismissedVersion: version })
+  })
+
+  ipcMain.handle("updates:download", async (event, asset: UpdateAsset): Promise<UpdateDownloadOutcome> => {
+    if (activeUpdateDownload) return { status: "failed", detail: "A download is already in progress" }
+    if (!isSafeAssetName(asset.name)) return { status: "failed", detail: `Refused asset name: ${asset.name}` }
+    if (!isAllowedDownloadUrl(asset.url)) return { status: "failed", detail: "Refused download URL" }
+
+    const downloadsDir = app.getPath("downloads")
+    await fs.mkdir(downloadsDir, { recursive: true })
+
+    const finalPath = path.join(downloadsDir, asset.name)
+    // Downloaded under a temp name and renamed on success, so a killed app
+    // or a dropped connection never leaves something that looks like a
+    // complete installer — same reasoning as the Bible version downloads.
+    const partPath = `${finalPath}.part`
+    const controller = new AbortController()
+    activeUpdateDownload = { controller, partPath }
+
+    try {
+      const response = await net.fetch(asset.url, {
+        headers: {
+          "User-Agent": `BibleTime v${app.getVersion()} (https://github.com/anthonycifuentes/bibletime)`,
+        },
+        signal: controller.signal,
+      })
+
+      if (!response.ok || !response.body) {
+        throw new Error(`${response.status} ${response.statusText}`)
+      }
+
+      const declaredLength = Number.parseInt(response.headers.get("content-length") ?? "", 10)
+      const totalBytes = Number.isFinite(declaredLength) && declaredLength > 0 ? declaredLength : null
+
+      const handle = await fs.open(partPath, "w")
+      let receivedBytes = 0
+      let lastTickAt = 0
+
+      try {
+        const reader = response.body.getReader()
+        for (;;) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          await handle.write(value)
+          receivedBytes += value.byteLength
+
+          const now = Date.now()
+          if (now - lastTickAt >= DOWNLOAD_PROGRESS_INTERVAL_MS && !event.sender.isDestroyed()) {
+            lastTickAt = now
+            event.sender.send("updates:download-progress", { receivedBytes, totalBytes })
+          }
+        }
+      } finally {
+        await handle.close()
+      }
+
+      await fs.rename(partPath, finalPath)
+      completedUpdateDownloadPath = finalPath
+
+      if (!event.sender.isDestroyed()) {
+        event.sender.send("updates:download-progress", { receivedBytes, totalBytes })
+      }
+
+      // Revealed, never executed. Running an installer the app just fetched
+      // would be executing remote content on the user's behalf, and it isn't
+      // needed to make this flow work.
+      shell.showItemInFolder(finalPath)
+
+      return { status: "completed", fileName: asset.name, filePath: finalPath }
+    } catch (error) {
+      await fs.rm(partPath, { force: true })
+      if (controller.signal.aborted) return { status: "cancelled" }
+      console.warn("Update download failed:", error)
+      return { status: "failed", detail: String(error) }
+    } finally {
+      activeUpdateDownload = null
+    }
+  })
+
+  ipcMain.handle("updates:cancel-download", () => {
+    // The download handler's catch is what deletes the partial file.
+    activeUpdateDownload?.controller.abort()
+  })
+
+  ipcMain.handle("updates:reveal-download", () => {
+    if (completedUpdateDownloadPath) shell.showItemInFolder(completedUpdateDownloadPath)
+  })
+}
+
+/**
  * The `/present` output window, tracked so a second "send to output" reuses
  * it instead of stacking another one on top — see `setWindowOpenHandler`.
  */
@@ -1436,7 +1790,19 @@ function createWindow() {
   // resizable, and fullscreen-capable, rather than the main window's menu
   // bar/devtools setup.
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (!new URL(url).pathname.startsWith("/present")) return { action: "allow" }
+    const target = new URL(url)
+
+    // Anything off our own origin — most concretely a "Watch on YouTube"
+    // click inside an embedded player — goes to the user's real browser.
+    // Allowing it would hand a chrome-less Electron window over to a remote
+    // page, which is both a security problem and a terrible thing to
+    // discover mid-service.
+    if (target.origin !== new URL(consoleUrl()).origin) {
+      if (target.protocol === "https:" || target.protocol === "http:") void shell.openExternal(url)
+      return { action: "deny" }
+    }
+
+    if (!target.pathname.startsWith("/present")) return { action: "allow" }
 
     // Already open: focus it and refuse to make a second one. Content
     // reaches `/present` through `localStorage` + `storage` events (the
@@ -1507,6 +1873,7 @@ app.whenReady().then(async () => {
   await loadOutputWindowBounds()
 
   registerAppInfoHandlers()
+  registerUpdateHandlers()
   registerTemplateHandlers()
   registerTemplateMediaHandlers()
   registerBibleVersionDownloadHandlers()

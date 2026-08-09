@@ -1,5 +1,6 @@
 import type { MediaEntry } from "@/modules/media/interfaces"
 import { contentKey } from "@/modules/media/lib/content-key"
+import { getMediaAccess } from "@/modules/media/services/access"
 import { buildCacheReference } from "@/modules/media/services/media-reference"
 
 /** Long edge of a cached thumbnail. Large enough for the biggest tile the size slider offers, on a 2x display. */
@@ -10,7 +11,7 @@ const VIDEO_FRAME_SECOND = 1
 
 const THUMBNAIL_FILE = "thumb.jpg"
 
-const cacheBridge = () => (typeof window !== "undefined" ? window.bibletime?.mediaCache : undefined)
+const cacheBridge = () => getMediaAccess().cache
 
 export interface ThumbnailResult {
   reference: string
@@ -121,11 +122,8 @@ const renderVideoThumbnail = async (url: string): Promise<RenderedThumbnail> => 
  * not decoded on a cache hit.
  */
 export const readCachedThumbnail = async (entry: MediaEntry): Promise<string | null> => {
-  const cache = cacheBridge()
-  if (!cache) return null
-
   const key = contentKey(entry.rootId, entry.relativePath, entry.size, entry.mtimeMs)
-  const files = await cache.list(key)
+  const files = await cacheBridge().list(key)
   return files.includes(THUMBNAIL_FILE) ? buildCacheReference(key, THUMBNAIL_FILE) : null
 }
 
@@ -135,15 +133,19 @@ export const readCachedThumbnail = async (entry: MediaEntry): Promise<string | n
  * `render-pdf-pages`), so they never reach here.
  */
 export const generateThumbnail = async (entry: MediaEntry): Promise<ThumbnailResult> => {
-  const cache = cacheBridge()
-  if (!cache) throw new Error("Media cache is desktop-only")
   if (entry.unsupportedReason) throw new Error(`Cannot decode ${entry.extension}`)
 
+  // The reference is only directly loadable where a protocol serves it; in
+  // the browser this mints an object URL, which is released as soon as the
+  // frame has been drawn rather than being held for the tile's lifetime.
+  const url = await getMediaAccess().resolveUrl(entry.reference)
+  if (!url) throw new Error(`Could not resolve ${entry.reference}`)
+
   const rendered =
-    entry.kind === "video" ? await renderVideoThumbnail(entry.reference) : await renderImageThumbnail(entry.reference)
+    entry.kind === "video" ? await renderVideoThumbnail(url) : await renderImageThumbnail(url)
 
   const key = contentKey(entry.rootId, entry.relativePath, entry.size, entry.mtimeMs)
-  const reference = await cache.write(key, THUMBNAIL_FILE, rendered.buffer)
+  const reference = await cacheBridge().write(key, THUMBNAIL_FILE, rendered.buffer)
 
   return { reference, width: rendered.width, height: rendered.height, durationMs: rendered.durationMs }
 }

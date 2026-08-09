@@ -46,9 +46,23 @@ export const kindForExtension = (extension: string): MediaEntryKind | undefined 
 
 export const isSupportedExtension = (extension: string): boolean => kindForExtension(extension) !== undefined
 
-/** Set on an entry the grid lists but cannot render, so the tile can say why and the add actions can refuse it. */
-export const unsupportedReasonFor = (extension: string): "codec" | undefined =>
-  UNDECODABLE_EXTENSIONS.has(extension) ? "codec" : undefined
+/**
+ * Set on an entry the grid lists but cannot render, so the tile can say why
+ * and the add actions can refuse it.
+ *
+ * The two reasons send the user to different remedies, which is why they
+ * are distinct: `codec` means no build can decode this file and the fix is
+ * converting it, while `desktop-only` means this format needs LibreOffice
+ * and the fix is either the desktop app or exporting the deck as a PDF.
+ */
+export const unsupportedReasonFor = (
+  extension: string,
+  capabilities: { canConvertDocuments: boolean } = { canConvertDocuments: true }
+): "codec" | "desktop-only" | undefined => {
+  if (UNDECODABLE_EXTENSIONS.has(extension)) return "codec"
+  if (!capabilities.canConvertDocuments && CONVERTIBLE_DOCUMENT_EXTENSIONS.has(extension)) return "desktop-only"
+  return undefined
+}
 
 /** True for a deck that must go through LibreOffice before it can be rasterized. */
 export const needsConversion = (extension: string): boolean => CONVERTIBLE_DOCUMENT_EXTENSIONS.has(extension)

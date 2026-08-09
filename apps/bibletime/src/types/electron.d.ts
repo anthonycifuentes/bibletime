@@ -7,6 +7,13 @@ import type {
   MediaRoot,
   RawMediaDirectoryListing,
 } from "@/modules/media/interfaces"
+import type {
+  UpdateAsset,
+  UpdateCheckResult,
+  UpdateDownloadOutcome,
+  UpdateDownloadProgress,
+  UpdateInitialState,
+} from "@/modules/updates/interfaces"
 
 export {}
 
@@ -20,6 +27,16 @@ declare global {
     bibletime?: {
       versions?: NodeJS.ProcessVersions
       appVersion?: string
+      updates: {
+        getState: () => Promise<UpdateInitialState>
+        check: () => Promise<UpdateCheckResult>
+        download: (asset: UpdateAsset) => Promise<UpdateDownloadOutcome>
+        cancelDownload: () => Promise<void>
+        revealDownload: () => Promise<void>
+        dismiss: (version: string) => Promise<void>
+        /** Subscribes to download progress; the returned function unsubscribes. */
+        onDownloadProgress: (callback: (progress: UpdateDownloadProgress) => void) => () => void
+      }
       templates: {
         list: () => Promise<SavedTemplate[]>
         save: (template: SavedTemplate) => Promise<void>
