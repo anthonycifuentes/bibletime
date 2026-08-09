@@ -44,8 +44,8 @@ BibleTime has two ways of getting Scripture text.
 setup. Its id is exported as `BUNDLED_VERSION_ID` from
 `apps/bibletime/src/modules/bible/services/get-bible-data.ts`.
 
-**Downloaded on demand** — the app can fetch a catalog of additional translations and let the
-user download them:
+**Downloaded on demand** — the app fetches a catalog of additional translations and lets the user
+download any of them for offline use:
 
 ```
 https://mrk214.github.io/snapshots/data.json
@@ -53,11 +53,56 @@ https://mrk214.github.io/snapshots/data.json
 
 See `apps/bibletime/src/modules/bible/services/get-bible-versions.ts`. This is the only network
 request BibleTime makes in normal operation, it is optional, and it is user-initiated. Once a
-version is downloaded it works offline like the bundled one.
+version is downloaded it works offline exactly like the bundled one.
 
 Translations obtained this way are **not** redistributed by this repository — they are fetched by
 the user, from a third-party host, at the user's request. Their licensing is between the user and
 whoever holds the rights to that text.
+
+### The upstream datasets
+
+The catalog and every version file are published by [**@mrk214**](https://github.com/mrk214) as
+open JSON datasets, one repository per language, each served over GitHub Pages:
+
+| Repository | Language | `lang_key` |
+| --- | --- | --- |
+| [`bible-data-en-eng`](https://github.com/mrk214/bible-data-en-eng) | English | `en___eng___eng` |
+| [`bible-data-es-spa`](https://github.com/mrk214/bible-data-es-spa) | Spanish | `es___spa___spa` |
+| [`bible-data-pt-por`](https://github.com/mrk214/bible-data-pt-por) | Portuguese | `pt___por___por` |
+
+[`reading-json-files`](https://github.com/mrk214/reading-json-files) is the author's reference
+implementation for consuming these files, and its
+[`src/types.ts`](https://github.com/mrk214/reading-json-files/blob/main/src/types.ts) is the
+canonical description of the format. Worth reading before changing anything in
+`modules/bible/services/`.
+
+**One catalog covers every language.** `data.json` is global, not per-repository — each entry
+carries `lang_key`, `lang_info`, and `source_repo_url`, and points at its own file:
+
+```
+https://mrk214.github.io/snapshots/<lang_key>/<ABBR>_vid_<version_id>.json
+```
+
+As of 2026-08-09 it lists **26 translations** — 7 English, 12 Spanish, 7 Portuguese — which lines
+up with the three locales the app's interface already speaks. Because the catalog is fetched at
+runtime, translations the author adds upstream appear in BibleTime with **no app update and no
+code change**.
+
+### Downloaded versions use the same shape as the bundled file
+
+A version file from any of the three repositories has the identical structure to
+`public/bible-data/rvr1960.json` — `version_id`, `local_abbreviation`, `local_title`, `language`,
+`publisher`, `copyright`, and `books[].chapters[].items[]`. Verified against
+`en___eng___eng/KJV_vid_1.json`.
+
+That is why nothing language-specific exists in the reader: `get-bible-versions.ts` applies no
+language filter, and `get-bible-data.ts` parses a downloaded version through the same path as the
+bundled one. The files served from the snapshots host are already trimmed — they carry no
+`chapter_html` — so they arrive at roughly the size the local build script produces (KJV is
+~6.8 MB).
+
+Storage is per-platform, behind one interface in `modules/bible/services/downloads/`: the desktop
+build writes to disk, the web build to browser storage.
 
 ---
 
