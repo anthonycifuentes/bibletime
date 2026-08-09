@@ -92,12 +92,12 @@
 
 ## 12. Go public and cut v0.1.0
 
-- [ ] 12.1 Confirm sections 1–11 are merged to `main` and the audit in section 10 is clean.
+- [x] 12.1 Sections 1–11 merged to `main` via PR #2; audit clean (one substitution noted at 10.3).
 - [x] 12.2 ~~Flip repository visibility to public.~~ **Already public** — discovered 2026-08-09. The repo has been public since it was created on 2026-07-28 (verified: unauthenticated `api.github.com` request returns 200). The proposal and design were written assuming it was private; that premise was wrong. Consequences: the "irreversible one-way door" in design.md decision 7 is **already open**, the RVR1960 exposure is live now rather than prospective, and the protections in section 11 are overdue rather than pre-emptive — they should be applied first, not last.
 - [x] 12.3 Set the repository description and topics, and add the website field pointing at `https://bibletime-app.vercel.app`.
-- [ ] 12.4 Tag `v0.1.0` and push the tag.
-- [ ] 12.5 Watch the release workflow and confirm all three platform jobs succeed.
-- [ ] 12.6 Download the draft's artifacts and verify each: macOS arm64 and x64 DMGs mount and launch, the Windows NSIS installer runs, the Linux AppImage runs after `chmod +x`.
-- [ ] 12.7 Confirm the app opens to the console (not the landing page) and that Bible, Songs, Media, and Notes tabs load in the packaged build.
-- [ ] 12.8 Fill in the release notes and publish the draft.
-- [ ] 12.9 Open `https://bibletime-app.vercel.app`, click **Download — free**, and confirm it lands on a Releases page with downloadable assets.
+- [x] 12.4 Tagged `v0.1.0` and pushed; the tag triggered run `31292808930`.
+- [x] 12.5 All three platform jobs succeeded, and the publish job created the draft.
+- [ ] 12.6 **Partially done.** The CI-built `BibleTime-0.1.0-arm64.dmg` was downloaded from the release, mounted, and launched: `CFBundleShortVersionString` is `0.1.0`, `Resources/web` ships unpacked with the Nitro server and `rvr1960.json`, and the app served the console. **The Intel DMG, the Windows `.exe`, and the Linux AppImage built successfully but were never executed** — no x64 Mac, Windows, or Linux machine was available. They shipped in v0.1.0 unverified, by explicit decision.
+- [x] 12.7 The packaged app boots to the console, not the landing page — `GET /library` on the bundled server returned HTTP 200. Per-tab interaction was not exercised.
+- [x] 12.8 Release notes corrected (the AppImage ships as `x86_64`, not `x64`) and the draft published as latest on 2026-08-09.
+- [x] 12.9 Verified unauthenticated: `/releases` returns 200, `/releases/latest` redirects to `v0.1.0`, and all four installers return 206 on a ranged GET.
