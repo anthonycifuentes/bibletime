@@ -156,6 +156,27 @@ Write the description in the imperative — "add", not "added" or "adds".
 
 ## Pull requests
 
+### The fast path
+
+```bash
+pnpm ship "fix(songs): stop the chorus repeating"
+```
+
+Branches off `main`, commits, pushes, opens the PR, and turns on **auto-merge** — GitHub squashes
+it the moment CI goes green and deletes the branch. You don't sit and watch the checks.
+
+```bash
+pnpm ship -d "feat(bible): parallel translations"   # draft, no auto-merge
+pnpm ship -n "chore: bump deps"                     # normal PR, merge manually
+```
+
+Run it again on the same branch to push follow-up commits to the open PR.
+
+Nothing is bypassed: `main` still requires a PR with a green `Lint, typecheck, build`, and still
+refuses force-pushes and deletion. Auto-merge just removes the waiting.
+
+### Either way
+
 - **One concern per PR.** A refactor and a feature in the same diff take three times as long to
   review.
 - Fill in the PR template: what changed, the related issue or OpenSpec change name, and
