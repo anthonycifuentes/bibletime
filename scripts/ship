@@ -46,9 +46,22 @@ slug=$(printf '%s' "$subject" \
 branch="${type_prefix:-chore}/${slug:-change}"
 
 current=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$current" == "main" ]]; then
-  echo "→ branching: $branch"
-  git checkout -b "$branch"
+# Staying on a branch whose PR already merged would push the new commit to a
+# dead branch — no PR, no CI, and it never reaches main. Branch again instead.
+current_pr_state=""
+if [[ "$current" != "main" ]]; then
+  current_pr_state=$(gh pr view --json state -q .state 2>/dev/null || echo "")
+fi
+
+if [[ "$current" == "main" || "$current_pr_state" == "MERGED" || "$current_pr_state" == "CLOSED" ]]; then
+  if [[ "$current" != "main" ]]; then
+    echo "→ $current already ${current_pr_state,,}; branching off main"
+    git fetch -q origin main
+    git checkout -q -B "$branch" origin/main
+  else
+    echo "→ branching: $branch"
+    git checkout -q -b "$branch"
+  fi
 else
   branch="$current"
   echo "→ already on $branch"
@@ -65,8 +78,9 @@ fi
 git push -q -u origin "$branch"
 echo "→ pushed"
 
-# Reuse an open PR for this branch if there is one.
-if url=$(gh pr view --json url -q .url 2>/dev/null); then
+# Reuse a PR for this branch only while it is still open.
+if [[ "$(gh pr view --json state -q .state 2>/dev/null || echo "")" == "OPEN" ]]; then
+  url=$(gh pr view --json url -q .url)
   echo "→ PR exists: $url"
 else
   args=(--base main --head "$branch" --title "$MESSAGE" --body "$MESSAGE" --fill-verbose)
