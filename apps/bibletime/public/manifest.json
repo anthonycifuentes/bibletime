@@ -1,6 +1,8 @@
 {
+  "id": "/",
   "short_name": "BibleTime",
   "name": "BibleTime",
+  "description": "Project the Bible, songs, media, and notes from one place. Free and offline-first.",
   "icons": [
     {
       "src": "favicon.ico",

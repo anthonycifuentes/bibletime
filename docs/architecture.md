@@ -126,6 +126,45 @@ Read the comments there before changing it:
 
 ---
 
+## Installing the web app
+
+The landing page offers the browser version as an installable app, through
+`beforeinstallprompt`. There is a newer, tidier way to do this — the declarative
+[`<install>` element](https://developer.chrome.com/blog/install-element) — but it's behind a flag
+in Chromium and needs a per-origin origin trial token to reach real visitors, with the trial
+ending in Chrome 153. `beforeinstallprompt` is unglamorous and has shipped for years. That's the
+trade taken here.
+
+The moving parts:
+
+| Where | What |
+| --- | --- |
+| `apps/bibletime/public/manifest.json` | Name, icons, `start_url`, `id` — what Chromium checks before it offers anything. |
+| `src/types/before-install-prompt.d.ts` | `BeforeInstallPromptEvent`, absent from `lib.dom` because it isn't standard. |
+| `routes/__root.tsx` | An inline script that catches the event before hydration and parks it on `window`. |
+| `modules/landing/actions/use-install-app.ts` | The state machine: ready, prompting, installed, dismissed. |
+| `modules/landing/components/install-app-button.tsx` | An ordinary `Button`, in the row with the downloads. |
+
+Two things about this are easy to get wrong:
+
+- **The event fires before React hydrates.** On a landing page Chromium routinely decides the page
+  qualifies while the bundle is still evaluating, and an event nobody was listening for is a
+  button that never appears. Hence the inline script in the document head, next to the theme one,
+  rather than a `useEffect`.
+- **The prompt is single-use.** After `prompt()` resolves, the event is spent whatever the user
+  chose. On dismissal the button gives way to a line pointing at the browser's own menu instead of
+  staying up as a control that would do nothing.
+
+Safari and Firefox never fire the event, so the button doesn't render there at all — no dead
+control, and the desktop downloads are the better answer for those visitors regardless.
+`docs/install.md` names Safari's **File → Add to Dock** for anyone who wants the equivalent.
+
+> Installability needs no service worker — Chrome dropped that requirement in 112 on desktop. It
+> does mean the installed web app is *not* offline-capable: it's the same connection-dependent
+> browser build in its own window. Offline is what the desktop download is for.
+
+---
+
 ## Local-first, and the one exception
 
 Content, media, and service plans live on the user's machine. There is no account system, no
