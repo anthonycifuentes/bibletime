@@ -1,0 +1,9 @@
+# Code owners for BibleTime.
+#
+# Every path is owned by the maintainer, so every pull request gets a review request
+# automatically. Combined with the `main` ruleset (which requires an approving review),
+# nothing merges without it.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+* @anthonycifuentes

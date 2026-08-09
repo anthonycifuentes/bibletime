@@ -1,0 +1,37 @@
+version: 2
+
+updates:
+  # Dependencies across the whole pnpm workspace (root, apps/*, packages/*).
+  - package-ecosystem: npm
+    directories:
+      - "/"
+      - "/apps/bibletime"
+      - "/apps/desktop"
+      - "/packages/ui"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    # Grouped so a month of routine bumps arrives as a couple of reviewable PRs
+    # rather than twenty. Major bumps stay separate — those need real review.
+    groups:
+      production-minor-patch:
+        dependency-type: production
+        update-types: [minor, patch]
+      development-minor-patch:
+        dependency-type: development
+        update-types: [minor, patch]
+
+  # The actions used by ci.yml and release.yml. These are pinned to commit
+  # SHAs, so Dependabot is the mechanism that moves those pins forward.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns: ["*"]

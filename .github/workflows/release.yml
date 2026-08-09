@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  # Dry run: builds all three platforms and uploads workflow artifacts, but the
+  # publish job is skipped, so no GitHub Release object is ever created.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+
+    # A broken Windows build must not throw away working macOS and Linux
+    # artifacts — the maintainer can still inspect what did succeed.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The `package` script is the whole pipeline: web build -> main/preload
+      # compile -> electron-builder. Reassembling those steps here would let
+      # this workflow drift away from what a maintainer runs locally.
+      - name: Package desktop app
+        run: pnpm --filter desktop package
+
+      - name: Upload installers
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: installers-${{ matrix.os }}
+          # Installers only. The `release/` directory also holds unpacked .app
+          # and linux-unpacked trees plus builder debug output, none of which
+          # belong on a release page.
+          path: |
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.AppImage
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish draft release
+    needs: build
+    runs-on: ubuntu-latest
+    # Only a version tag publishes. A manual dispatch stops after `build`.
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    # The only job in this workflow that can write to the repository, and it
+    # runs no project code — just artifact download and the release API call.
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all installers
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: dist
+          pattern: installers-*
+          merge-multiple: true
+
+      - name: List collected artifacts
+        run: ls -lh dist
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          # Draft: the maintainer downloads and verifies every installer before
+          # anyone can see the release. A failed build never reaches users.
+          draft: true
+          name: BibleTime ${{ github.ref_name }}
+          files: dist/*
+          body: |
+            ## Download
+
+            | Platform | File |
+            | --- | --- |
+            | macOS (Apple Silicon) | `BibleTime-*-arm64.dmg` |
+            | macOS (Intel) | `BibleTime-*-x64.dmg` |
+            | Windows | `BibleTime-*-x64.exe` |
+            | Linux | `BibleTime-*-x64.AppImage` |
+
+            ## Before you install
+
+            **These builds are not code-signed.** BibleTime is free and has no
+            budget for an Apple Developer ID or a Windows EV certificate yet, so
+            your operating system will warn you that the app is unrecognized.
+            The app is not broken and this is expected.
+
+            Each platform's warning, and the exact steps to get past it, are in
+            **[the installation guide](https://github.com/anthonycifuentes/bibletime/blob/main/docs/install.md)**.
+
+            ## Prefer not to install anything?
+
+            BibleTime runs in the browser at <https://bibletime-app.vercel.app>.
+
+            ---
+
+            BibleTime is free and open source under the
+            [MIT license](https://github.com/anthonycifuentes/bibletime/blob/main/LICENSE).
+            Bundled fonts and Bible text carry their own terms — see
+            [THIRD_PARTY_NOTICES.md](https://github.com/anthonycifuentes/bibletime/blob/main/THIRD_PARTY_NOTICES.md).

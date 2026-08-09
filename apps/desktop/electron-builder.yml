@@ -24,22 +24,41 @@ extraResources:
   - from: ../bibletime/.output
     to: web
 
+# The release workflow collects the files from `release/` and attaches them to
+# a draft GitHub Release itself. electron-builder must not try to upload
+# anything on its own — the build jobs run with a read-only token.
+publish: null
+
+# Three platforms land in one GitHub Release, and macOS ships two
+# architectures, so every artifact needs the arch in its name or they collide.
+artifactName: ${productName}-${version}-${arch}.${ext}
+
 mac:
   category: public.app-category.productivity
   icon: build/icon.icns
+  # dmg is what a Mac user expects to double-click; zip is the format that
+  # survives being passed around in chat and is what electron-updater would
+  # consume later. x64 is here for the Intel Macs still in church sound booths.
   target:
-    - target: dir
-      arch: [arm64]
-  # Unsigned local build: without this, electron-builder picks up any
-  # Developer ID in the keychain and fails the build when it can't complete
-  # a full signing/notarization run.
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+  # Unsigned build: without this, electron-builder picks up any Developer ID
+  # in the keychain and fails the build when it can't complete a full
+  # signing/notarization run. On CI there is no identity at all. To start
+  # signing, remove this line and supply CSC_LINK / CSC_KEY_PASSWORD.
   identity: null
 
 win:
   icon: build/icon.ico
-  target: nsis
+  target:
+    - target: nsis
+      arch: [x64]
 
 linux:
   icon: build/icon-1024.png
   category: Office
-  target: AppImage
+  target:
+    - target: AppImage
+      arch: [x64]

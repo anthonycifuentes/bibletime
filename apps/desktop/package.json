@@ -1,14 +1,20 @@
 {
   "name": "desktop",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "BibleTime \u2014 a local-first presentation app for churches and ministries.",
   "author": "Anthony Cifuentes",
+  "license": "MIT",
+  "homepage": "https://bibletime-app.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthonycifuentes/bibletime.git"
+  },
   "type": "module",
   "main": "dist/main.js",
   "scripts": {
     "dev": "concurrently -k -n web,electron -c blue,green \"pnpm --filter web dev\" \"wait-on http://localhost:3000 && pnpm run build && electron .\"",
-    "build": "tsc -p tsconfig.json && tsc src/preload.ts --ignoreConfig --outDir dist --module commonjs --moduleResolution bundler --target es2022 --skipLibCheck --types node && mv dist/preload.js dist/preload.cjs",
+    "build": "tsc -p tsconfig.json && tsc src/preload.ts --ignoreConfig --outDir dist --module commonjs --moduleResolution bundler --target es2022 --skipLibCheck --types node && node -e \"require('fs').renameSync('dist/preload.js','dist/preload.cjs')\"",
     "start": "electron .",
     "typecheck": "tsc --noEmit",
     "package": "pnpm --filter web build && pnpm run build && electron-builder --config electron-builder.yml"

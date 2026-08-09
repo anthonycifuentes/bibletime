@@ -1,0 +1,86 @@
+name: Bug report
+description: Something in BibleTime doesn't work the way it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        **Security vulnerabilities do not belong here.** Report those privately via a
+        [security advisory](https://github.com/anthonycifuentes/bibletime/security/advisories/new).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem in a sentence or two.
+      placeholder: The output window goes black when I send a verse after opening a saved project.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: What exactly do you do to make it happen? Number the steps.
+      placeholder: |
+        1. Open BibleTime
+        2. Open a saved project from File → Open
+        3. Go to the Bible tab and click a verse
+        4. The output window goes black
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+      placeholder: The verse should appear on the output screen.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where are you running BibleTime?
+      options:
+        - Desktop app
+        - Web browser
+        - Both
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows
+        - Linux
+        - Other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: BibleTime version
+      description: >-
+        The version from the release you downloaded (e.g. 0.1.0). If you're running from source,
+        say so and give the commit.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots, logs, or anything else
+      description: >-
+        Drag images in directly. If a projector or second screen is involved, describe the
+        display setup — that's often the deciding detail.
+    validations:
+      required: false
