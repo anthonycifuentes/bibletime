@@ -38,7 +38,7 @@ export function useTabs({
   const direction = useRef(1)
 
   const [internal, setInternal] = useState(
-    () => defaultValue ?? items.find((i) => !i.disabled)?.value ?? items[0]?.value ?? ""
+    () => defaultValue ?? items.find((i) => !i.disabled)?.value ?? items.at(0)?.value ?? ""
   )
 
   const value = controlled ?? internal
@@ -60,7 +60,7 @@ export function useTabs({
 
   const focusAt = useCallback(
     (i: number) => {
-      const item = items[i]
+      const item = items.at(i)
       if (!item) return
       nodes.current.get(item.value)?.focus()
     },

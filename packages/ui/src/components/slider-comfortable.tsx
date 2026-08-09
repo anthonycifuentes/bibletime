@@ -475,7 +475,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
       trackWidthRef.current = w;
       const px0 = valueToPixel(values[0], min, max, w);
       motionX0.set(px0);
-      if (isRange && values[1] !== undefined) {
+      if (isRange && values.length > 1) {
         const px1 = valueToPixel(values[1], min, max, w);
         motionX1.set(px1);
       }
@@ -496,7 +496,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
           const mx = maxRef.current;
           const px0 = valueToPixel(v[0], mn, mx, w);
           animate(motionX0, px0, spring.moderate);
-          if (isRange && v[1] !== undefined) {
+          if (isRange && v.length > 1) {
             const px1 = valueToPixel(v[1], mn, mx, w);
             animate(motionX1, px1, spring.moderate);
           }
@@ -519,7 +519,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
       const v = valuesRef.current;
       const px0 = valueToPixel(v[0], min, max, tw);
       animate(motionX0, px0, spring.moderate);
-      if (isRange && v[1] !== undefined) {
+      if (isRange && v.length > 1) {
         const px1 = valueToPixel(v[1], min, max, tw);
         animate(motionX1, px1, spring.moderate);
       }
@@ -880,7 +880,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
                   motionX={motionX0}
                 />
               )}
-              {isInteracting && isRange && values[1] !== undefined && (
+              {isInteracting && isRange && values.length > 1 && (
                 <TooltipValue
                   key="tooltip-1"
                   value={values[1]}
