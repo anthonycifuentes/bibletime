@@ -1,7 +1,7 @@
 import { useTranslation } from "@/modules/core/i18n"
 import { useMediaThumbnail } from "@/modules/media/actions/use-media-thumbnail"
 import type { MediaEntry } from "@/modules/media/interfaces"
-import { revealMediaInFolder } from "@/modules/media/services"
+import { mediaCapabilities, revealMediaInFolder } from "@/modules/media/services"
 import {
   ContextMenu,
   ContextMenuContent,
@@ -129,17 +129,26 @@ export function MediaFileTile({
           <span className="truncate text-xs" title={entry.name}>
             {entry.name}
           </span>
-          {isUnsupported ? (
+          {/*
+            The two unsupported reasons have different remedies, so they get
+            different copy: a codec problem needs the file converted, while a
+            deck only this build cannot open needs a PDF export.
+          */}
+          {entry.unsupportedReason === "desktop-only" ? (
+            <span className="truncate text-[10px] text-muted-foreground">{t("media.deckNeedsDesktop")}</span>
+          ) : isUnsupported ? (
             <span className="truncate text-[10px] text-destructive">{t("media.unsupportedFile")}</span>
           ) : null}
         </div>
       </ContextMenuTrigger>
 
       <ContextMenuContent>
-        <ContextMenuItem onClick={() => void revealMediaInFolder(entry.reference)}>
-          <HugeiconsIcon icon={FolderOpenIcon} strokeWidth={2} />
-          {t("media.revealInFolder")}
-        </ContextMenuItem>
+        {mediaCapabilities().canRevealInFolder ? (
+          <ContextMenuItem onClick={() => void revealMediaInFolder(entry.reference)}>
+            <HugeiconsIcon icon={FolderOpenIcon} strokeWidth={2} />
+            {t("media.revealInFolder")}
+          </ContextMenuItem>
+        ) : null}
         <ContextMenuItem onClick={() => onToggleFavorite(entry, !isFavorite)}>
           <HugeiconsIcon icon={StarIcon} strokeWidth={2} />
           {t(isFavorite ? "media.unstar" : "media.star")}

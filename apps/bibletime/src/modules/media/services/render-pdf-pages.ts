@@ -1,6 +1,7 @@
 import type * as PdfJs from "pdfjs-dist"
 
 import type { MediaDocumentPage, MediaDocumentError } from "@/modules/media/interfaces"
+import { getMediaAccess } from "@/modules/media/services/access"
 import { buildCacheReference } from "@/modules/media/services/media-reference"
 
 /**
@@ -46,7 +47,7 @@ const pageFileName = (pageIndex: number): string => `page-${String(pageIndex + 1
 /** Matches `pageFileName`, for counting what a cache directory already holds. */
 const PAGE_FILE_PATTERN = /^page-\d{4}\.png$/
 
-const cacheBridge = () => (typeof window !== "undefined" ? window.bibletime?.mediaCache : undefined)
+const cacheBridge = () => getMediaAccess().cache
 
 export interface RenderPdfProgress {
   renderedPages: number
@@ -72,10 +73,9 @@ const yieldToUi = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
  * PDF parsing at all.
  */
 export const readCachedPages = async (contentKey: string): Promise<MediaDocumentPage[] | null> => {
-  const cache = cacheBridge()
-  if (!cache) return null
-
-  const files = (await cache.list(contentKey)).filter((file) => PAGE_FILE_PATTERN.test(file)).sort()
+  const files = (await cacheBridge().list(contentKey))
+    .filter((file) => PAGE_FILE_PATTERN.test(file))
+    .sort()
   if (files.length === 0) return null
 
   // Dimensions aren't cached alongside the pages; the tile reads them from
@@ -99,13 +99,15 @@ export const renderPdfPages = async (
   options: { signal?: AbortSignal; onProgress?: (progress: RenderPdfProgress) => void } = {}
 ): Promise<RenderPdfResult> => {
   const cache = cacheBridge()
-  if (!cache) return { ok: false, error: { code: "desktop-required" } }
-
   const pdfjs = await loadPdfjs()
 
-  // The source is addressed by URL, so pdf.js streams it through the custom
-  // protocol rather than a multi-megabyte buffer crossing the IPC boundary.
-  const loadingTask = pdfjs.getDocument({ url: pdfReference })
+  // The source is addressed by URL, so pdf.js streams it — through the
+  // custom protocol on desktop, or an object URL in the browser — rather
+  // than a multi-megabyte buffer crossing a boundary.
+  const url = await getMediaAccess().resolveUrl(pdfReference)
+  if (!url) return { ok: false, error: { code: "pdf-unreadable", detail: "Could not resolve the source file" } }
+
+  const loadingTask = pdfjs.getDocument({ url })
 
   let document_: PdfJs.PDFDocumentProxy
   try {

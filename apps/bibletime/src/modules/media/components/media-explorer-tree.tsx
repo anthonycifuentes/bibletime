@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useState } from "react"
-import type { DragEvent } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { ChangeEvent, DragEvent } from "react"
 
 import { useTranslation } from "@/modules/core/i18n"
-import type { MediaDirectory, MediaLocation } from "@/modules/media/interfaces"
+import type { MediaCapabilities, MediaDirectory, MediaLocation } from "@/modules/media/interfaces"
+import {
+  DOCUMENT_EXTENSIONS,
+  IMAGE_EXTENSIONS,
+  VIDEO_EXTENSIONS,
+} from "@/modules/media/lib/supported-formats"
 import { listDirectory } from "@/modules/media/services"
 import type { MediaRootStatus } from "@/modules/media/services"
 import { Button } from "@workspace/ui/components/button"
@@ -27,11 +32,37 @@ import {
 interface MediaExplorerTreeProps {
   roots: MediaRootStatus[]
   location: MediaLocation
+  capabilities: MediaCapabilities
   onSelectLocation: (location: MediaLocation) => void
   onAddRoot: () => void
   onAddRootByPath: (directoryPath: string) => void
+  /** Adds loose files, for a browser that cannot hand over a whole folder. */
+  onAddFiles: (files: File[], rootId?: string) => void
   onRemoveRoot: (rootId: string) => void
   onRelocateRoot: (rootId: string) => void
+  onReconnectRoot: (rootId: string) => void
+}
+
+/**
+ * The picker's filter, built from the same allowlist the grid uses so the
+ * two can never drift — a file the picker offers is always one the grid
+ * will list.
+ */
+const FILE_PICKER_ACCEPT = [...IMAGE_EXTENSIONS, ...VIDEO_EXTENSIONS, ...DOCUMENT_EXTENSIONS]
+  .map((extension) => `.${extension}`)
+  .join(",")
+
+/** Bytes as something a person reads at a glance — a stash's size sits next to its name. */
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`
+  const units = ["KB", "MB", "GB"]
+  let value = bytes / 1024
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit += 1
+  }
+  return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`
 }
 
 /** Lazily-loaded subdirectories, keyed by `<rootId>:<relativePath>` — a media root can be a whole Pictures library, so nothing is walked until it's opened. */
@@ -52,16 +83,20 @@ const cacheKey = (rootId: string, relativePath: string) => `${rootId}:${relative
 export function MediaExplorerTree({
   roots,
   location,
+  capabilities,
   onSelectLocation,
   onAddRoot,
   onAddRootByPath,
+  onAddFiles,
   onRemoveRoot,
   onRelocateRoot,
+  onReconnectRoot,
 }: MediaExplorerTreeProps) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [children, setChildren] = useState<DirectoryCache>({})
   const [isDropTarget, setIsDropTarget] = useState(false)
+  const filePickerRef = useRef<HTMLInputElement>(null)
 
   const loadChildren = useCallback(async (rootId: string, relativePath: string) => {
     const key = cacheKey(rootId, relativePath)
@@ -139,19 +174,33 @@ export function MediaExplorerTree({
   }
 
   /**
-   * Dropping a folder from the OS file manager registers it as a root —
-   * the desktop-native way to add one, next to the picker button.
+   * A drop means two different things in the two builds, so it is resolved
+   * by what the drop actually carries rather than by a build check: a
+   * desktop drop exposes a real path and registers a whole folder, while a
+   * browser drop hands over `File` objects that go into a stash.
    */
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setIsDropTarget(false)
 
-    for (const file of Array.from(event.dataTransfer.files)) {
-      // Chromium exposes the real path on a dropped entry only in Electron;
-      // a file (rather than a folder) drop is ignored rather than guessed at.
-      const path = (window.bibletime ? (file as File & { path?: string }).path : undefined) ?? ""
-      if (path) onAddRootByPath(path)
+    const dropped = Array.from(event.dataTransfer.files)
+    const paths = dropped
+      .map((file) => (file as File & { path?: string }).path ?? "")
+      .filter((path) => path.length > 0)
+
+    if (paths.length > 0) {
+      for (const path of paths) onAddRootByPath(path)
+      return
     }
+
+    if (dropped.length > 0) onAddFiles(dropped)
+  }
+
+  const handleFilePicked = (event: ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(event.target.files ?? [])
+    if (picked.length > 0) onAddFiles(picked)
+    // Cleared so picking the same file twice in a row still fires a change.
+    event.target.value = ""
   }
 
   return (
@@ -198,14 +247,27 @@ export function MediaExplorerTree({
                 <button
                   type="button"
                   onClick={() => toggle(root.id, "")}
-                  disabled={!root.isAvailable}
+                  // A stash has no subdirectories to open, and an unreadable
+                  // root has nothing to list.
+                  disabled={!root.isAvailable || root.kind === "stash"}
                   className="flex size-4 shrink-0 items-center justify-center text-muted-foreground"
                 >
                   <HugeiconsIcon
-                    icon={root.isAvailable ? (isExpanded ? Folder02Icon : Folder01Icon) : Alert02Icon}
+                    icon={
+                      root.state !== "ready"
+                        ? Alert02Icon
+                        : root.kind === "stash"
+                          ? ImageIcon
+                          : isExpanded
+                            ? Folder02Icon
+                            : Folder01Icon
+                    }
                     size={14}
                     strokeWidth={2}
-                    className={cn(!root.isAvailable && "text-destructive")}
+                    className={cn(
+                      root.state === "unavailable" && "text-destructive",
+                      root.state === "needs-permission" && "text-muted-foreground"
+                    )}
                   />
                 </button>
                 <button
@@ -215,12 +277,23 @@ export function MediaExplorerTree({
                 >
                   {root.label}
                 </button>
+                {/* A stash grows browser storage, so its size is visible rather than discovered later. */}
+                {root.storedBytes ? (
+                  <span className="shrink-0 text-xs text-muted-foreground">{formatBytes(root.storedBytes)}</span>
+                ) : null}
               </ContextMenuTrigger>
               <ContextMenuContent>
-                <ContextMenuItem onClick={() => onRelocateRoot(root.id)}>
-                  <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
-                  {t("media.relocateRoot")}
-                </ContextMenuItem>
+                {root.kind === "stash" ? (
+                  <ContextMenuItem onClick={() => filePickerRef.current?.click()}>
+                    <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
+                    {t("media.addFiles")}
+                  </ContextMenuItem>
+                ) : (
+                  <ContextMenuItem onClick={() => onRelocateRoot(root.id)}>
+                    <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
+                    {t("media.relocateRoot")}
+                  </ContextMenuItem>
+                )}
                 <ContextMenuItem variant="destructive" onClick={() => onRemoveRoot(root.id)}>
                   <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
                   {t("media.removeRoot")}
@@ -228,8 +301,22 @@ export function MediaExplorerTree({
               </ContextMenuContent>
             </ContextMenu>
 
-            {/* An unreachable root says so in place, with its two remedies one right-click away. */}
-            {!root.isAvailable ? (
+            {/*
+              The two unreadable states get different copy and different
+              affordances, because they have different remedies: a lapsed
+              permission is one click away from working, while a missing
+              folder needs relocating or removing.
+            */}
+            {root.state === "needs-permission" ? (
+              <div className="flex items-center gap-2 px-2 pb-1 pl-8">
+                <p className="flex-1 text-xs text-muted-foreground">{t("media.rootNeedsPermission")}</p>
+                <Button type="button" variant="outline" size="sm" onClick={() => onReconnectRoot(root.id)}>
+                  {t("media.reconnectRoot")}
+                </Button>
+              </div>
+            ) : null}
+
+            {root.state === "unavailable" ? (
               <p className="px-2 pb-1 pl-8 text-xs text-muted-foreground">{t("media.rootUnavailable")}</p>
             ) : null}
 
@@ -240,12 +327,44 @@ export function MediaExplorerTree({
         )
       })}
 
-      <Button type="button" variant="outline" size="sm" className="mt-2 shrink-0" onClick={onAddRoot}>
-        <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
-        {t("media.addFolder")}
+      {/*
+        "Add folder" only appears where a folder can actually be handed over.
+        Rendering it disabled in Safari would read as a broken app rather
+        than as a browser limitation, which is what the hint below explains.
+      */}
+      {capabilities.canBrowseDirectories ? (
+        <Button type="button" variant="outline" size="sm" className="mt-2 shrink-0" onClick={onAddRoot}>
+          <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
+          {t("media.addFolder")}
+        </Button>
+      ) : null}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className={cn("shrink-0", capabilities.canBrowseDirectories ? "mt-1" : "mt-2")}
+        onClick={() => filePickerRef.current?.click()}
+      >
+        <HugeiconsIcon icon={ImageIcon} strokeWidth={2} />
+        {t("media.addFiles")}
       </Button>
 
-      {roots.length === 0 ? (
+      <input
+        ref={filePickerRef}
+        type="file"
+        multiple
+        accept={FILE_PICKER_ACCEPT}
+        className="hidden"
+        onChange={handleFilePicked}
+      />
+
+      {/* Says why the folder option is missing, so the limit reads as a browser fact. */}
+      {!capabilities.canBrowseDirectories ? (
+        <p className="px-2 py-2 text-xs text-muted-foreground">{t("media.noDirectoryPickerHint")}</p>
+      ) : null}
+
+      {roots.length === 0 && capabilities.canBrowseDirectories ? (
         <p className="px-2 py-2 text-xs text-muted-foreground">{t("media.noRootsHint")}</p>
       ) : null}
     </div>

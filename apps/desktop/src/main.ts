@@ -1790,7 +1790,19 @@ function createWindow() {
   // resizable, and fullscreen-capable, rather than the main window's menu
   // bar/devtools setup.
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (!new URL(url).pathname.startsWith("/present")) return { action: "allow" }
+    const target = new URL(url)
+
+    // Anything off our own origin — most concretely a "Watch on YouTube"
+    // click inside an embedded player — goes to the user's real browser.
+    // Allowing it would hand a chrome-less Electron window over to a remote
+    // page, which is both a security problem and a terrible thing to
+    // discover mid-service.
+    if (target.origin !== new URL(consoleUrl()).origin) {
+      if (target.protocol === "https:" || target.protocol === "http:") void shell.openExternal(url)
+      return { action: "deny" }
+    }
+
+    if (!target.pathname.startsWith("/present")) return { action: "allow" }
 
     // Already open: focus it and refuse to make a second one. Content
     // reaches `/present` through `localStorage` + `storage` events (the
