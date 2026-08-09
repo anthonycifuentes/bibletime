@@ -72,7 +72,7 @@ simple enough that a volunteer can use it without training, and fully usable wit
 | Mac (Apple Silicon) | `BibleTime-<version>-arm64.dmg` |
 | Mac (Intel) | `BibleTime-<version>-x64.dmg` |
 | Windows | `BibleTime-<version>-x64.exe` |
-| Linux | `BibleTime-<version>-x64.AppImage` |
+| Linux | `BibleTime-<version>-x86_64.AppImage` |
 
 > [!IMPORTANT]
 > **Your computer will warn you that the app is unrecognized.** BibleTime's builds aren't
