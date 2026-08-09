@@ -6,7 +6,7 @@ export type MediaFit = "contain" | "cover"
  * it renders through the same path as any other image — see
  * `add-media-tab`'s "one pipeline" decision.
  */
-export type MediaSlideKind = "image" | "video" | "document-page"
+export type MediaSlideKind = "image" | "video" | "document-page" | "youtube"
 
 /**
  * A media slide's payload. Lives in `core` rather than in either feature
@@ -38,4 +38,12 @@ export interface MediaSlideData {
   documentId?: string
   pageIndex?: number
   pageCount?: number
+  /**
+   * `youtube` only — where in the video to start, in whole seconds.
+   *
+   * The video id is derived from `src` at render time rather than stored
+   * alongside it, so the single source of truth for which video this is
+   * stays the URL a person would recognize in an exported project file.
+   */
+  startSeconds?: number
 }

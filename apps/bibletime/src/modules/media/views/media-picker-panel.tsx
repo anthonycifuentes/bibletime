@@ -5,6 +5,7 @@ import { useDocumentPages } from "@/modules/media/actions/use-document-pages"
 import { useMediaDirectory } from "@/modules/media/actions/use-media-directory"
 import { useMediaRoots } from "@/modules/media/actions/use-media-roots"
 import { GoogleSlidesImportDialog } from "@/modules/media/components/google-slides-import-dialog"
+import { YouTubeLinkDialog } from "@/modules/media/components/youtube-link-dialog"
 import { MediaExplorerTree } from "@/modules/media/components/media-explorer-tree"
 import { MediaFileGrid } from "@/modules/media/components/media-file-grid"
 import { MediaGridToolbar } from "@/modules/media/components/media-grid-toolbar"
@@ -54,8 +55,11 @@ interface MediaPickerPanelProps {
  * browse → select → preview → explicitly-add grammar, so there is one
  * interaction to learn across all three content tabs.
  *
- * Desktop-only by design: a media library is a view onto a filesystem the
- * web build cannot reach (see `add-media-tab` design decision 9).
+ * Renders in every build. What differs is not the tab but the seam beneath
+ * it: how a file reference resolves to something an `<img>` can load, and
+ * which capabilities the build has (see `enable-media-tab-on-web` design
+ * decisions 1 and 2). Affordances the build lacks are absent rather than
+ * shown disabled.
  */
 export function MediaPickerPanel({
   hasOpenFolder,
@@ -79,6 +83,7 @@ export function MediaPickerPanel({
   const [loop, setLoop] = useState(false)
   const [muted, setMuted] = useState(true)
   const [isImportOpen, setIsImportOpen] = useState(false)
+  const [isYouTubeOpen, setIsYouTubeOpen] = useState(false)
   /** Set while drilled into a document, or holding an imported Google Slides deck (which has no directory entry). */
   const [openDocument, setOpenDocument] = useState<MediaDocument | null>(null)
   const [selectedPageIndex, setSelectedPageIndex] = useState<number | null>(null)
@@ -215,17 +220,6 @@ export function MediaPickerPanel({
     if (slides.length > 0) writeMediaDragPayload(slides)
   }
 
-  if (!roots.isAvailable) {
-    return (
-      <Empty className="h-full">
-        <EmptyHeader>
-          <EmptyTitle>{t("media.desktopOnlyTitle")}</EmptyTitle>
-          <EmptyDescription>{t("media.desktopOnlyDescription")}</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    )
-  }
-
   return (
     <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-[minmax(180px,240px)_1fr_minmax(240px,300px)]">
       <div className="flex min-h-0 flex-col gap-2 overflow-hidden">
@@ -233,6 +227,7 @@ export function MediaPickerPanel({
         <MediaExplorerTree
           roots={roots.roots}
           location={location}
+          capabilities={roots.capabilities}
           onSelectLocation={(next) => {
             onLocationChange(next)
             setOpenDocument(null)
@@ -240,8 +235,10 @@ export function MediaPickerPanel({
           }}
           onAddRoot={() => void roots.addRoot()}
           onAddRootByPath={(directoryPath) => void roots.addRootByPath(directoryPath)}
+          onAddFiles={(files, rootId) => void roots.addFiles(files, rootId)}
           onRemoveRoot={(rootId) => void roots.removeRoot(rootId)}
           onRelocateRoot={(rootId) => void roots.relocateRoot(rootId)}
+          onReconnectRoot={(rootId) => void roots.reconnectRoot(rootId)}
         />
       </div>
 
@@ -319,6 +316,18 @@ export function MediaPickerPanel({
         onAddAsFolder={handleAddAsFolder}
         onPresent={handlePresent}
         onImportGoogleSlides={() => setIsImportOpen(true)}
+        onAddYouTube={() => setIsYouTubeOpen(true)}
+      />
+
+      {/*
+        A YouTube slide references nothing on disk, so it is added straight
+        to the folder rather than going through the file grid's
+        selection → preview → add flow.
+      */}
+      <YouTubeLinkDialog
+        open={isYouTubeOpen}
+        onOpenChange={setIsYouTubeOpen}
+        onAdd={(slide) => onAddMedia([slide], effectiveTemplateId)}
       />
 
       <GoogleSlidesImportDialog

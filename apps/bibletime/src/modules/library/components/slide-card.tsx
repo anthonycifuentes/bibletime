@@ -82,7 +82,7 @@ export function SlideCard({
   const { ratio } = useAspectRatio()
   const { elementRef, scale } = useElementWidthScale()
   const content = resolveFolderItemContent(item, templates)
-  const { isMissing } = useMediaAvailability(content.media)
+  const { isMissing, missingReason, url: mediaUrl } = useMediaAvailability(content.media)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   })
@@ -137,11 +137,16 @@ export function SlideCard({
             <SlidePreview
               template={content.template}
               media={content.media}
+              mediaUrl={mediaUrl}
               isMediaMissing={isMissing}
               text={content.text}
               reference={content.reference}
               versionLabel={content.versionLabel}
-              emptyMessage={content.media && isMissing ? t("media.missingFile") : content.emptyMessage}
+              emptyMessage={
+                content.media && isMissing
+                  ? t(missingReason === "needs-reconnect" ? "media.needsReconnect" : "media.missingFile")
+                  : content.emptyMessage
+              }
               scale={scale}
               className="h-full w-full rounded-none px-6 py-6"
             />

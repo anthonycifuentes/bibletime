@@ -73,7 +73,7 @@ export function SlideStyleDialog({
   }, [open, item.id])
 
   const content = resolveFolderItemContent(item, templates)
-  const { isMissing } = useMediaAvailability(content.media)
+  const { isMissing, missingReason, url: mediaUrl } = useMediaAvailability(content.media)
 
   // Built from the base template, *not* `content.template` — that one already
   // has the slide's saved override folded in, which would make clearing the
@@ -107,11 +107,16 @@ export function SlideStyleDialog({
               <SlidePreview
                 template={preview}
                 media={content.media}
+                mediaUrl={mediaUrl}
                 isMediaMissing={isMissing}
                 text={content.text}
                 reference={content.reference}
                 versionLabel={content.versionLabel}
-                emptyMessage={content.media && isMissing ? t("media.missingFile") : content.emptyMessage}
+                emptyMessage={
+                  content.media && isMissing
+                    ? t(missingReason === "needs-reconnect" ? "media.needsReconnect" : "media.missingFile")
+                    : content.emptyMessage
+                }
                 scale={scale}
                 className="h-full w-full rounded-2xl ring-1 ring-border"
               />

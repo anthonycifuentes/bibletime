@@ -5,6 +5,8 @@ import type {
   MediaFit,
   MediaSlideData,
 } from "@/modules/media/interfaces"
+import { useResolvedMediaUrl } from "@/modules/media/actions/use-resolved-media-url"
+import { mediaCapabilities } from "@/modules/media/services"
 import { SlideFrame } from "@/modules/presentation"
 import type { SlideTemplate } from "@/modules/presentation"
 import { Button } from "@workspace/ui/components/button"
@@ -44,6 +46,7 @@ interface MediaPreviewColumnProps {
   onAddAsFolder: () => void
   onPresent: () => void
   onImportGoogleSlides: () => void
+  onAddYouTube: () => void
 }
 
 /**
@@ -78,8 +81,12 @@ export function MediaPreviewColumn({
   onAddAsFolder,
   onPresent,
   onImportGoogleSlides,
+  onAddYouTube,
 }: MediaPreviewColumnProps) {
   const { t } = useTranslation()
+  // Resolved here rather than taken from the slide: `slide.src` is a stored
+  // reference, which only a protocol-serving build can load directly.
+  const { url: previewUrl } = useResolvedMediaUrl(slide?.src)
 
   const isDocument = entry?.kind === "document"
   const isUnsupported = entry?.unsupportedReason !== undefined
@@ -87,6 +94,9 @@ export function MediaPreviewColumn({
   /** One line under the preview describing whatever state the selection is in. */
   const statusMessage = (): string | null => {
     if (!entry) return null
+    // A deck this build cannot convert is a different problem from a file
+    // nothing can decode, and the user can act on it — so it says how.
+    if (entry.unsupportedReason === "desktop-only") return t("media.status.deckNeedsDesktop")
     if (isUnsupported) return t("media.status.unsupported")
 
     switch (documentState.status) {
@@ -143,6 +153,7 @@ export function MediaPreviewColumn({
         <SlideFrame
           template={effectiveTemplate}
           media={slide}
+          mediaUrl={previewUrl}
           emptyMessage={t("media.selectFileHint")}
           frameClassName="h-full w-full"
         />
@@ -231,9 +242,21 @@ export function MediaPreviewColumn({
         </Button>
       </div>
 
-      <Button type="button" variant="ghost" size="sm" className="shrink-0" onClick={onImportGoogleSlides}>
-        {t("media.importGoogleSlides")}
+      {/*
+        The export endpoint is a cross-origin fetch only the main process can
+        make, so in the browser this action is absent rather than offered and
+        failing (see `enable-media-tab-on-web` design decision 7).
+      */}
+      {/* Needs no filesystem, so it is offered in every build. */}
+      <Button type="button" variant="ghost" size="sm" className="shrink-0" onClick={onAddYouTube}>
+        {t("media.addYouTube")}
       </Button>
+
+      {mediaCapabilities().canImportGoogleSlides ? (
+        <Button type="button" variant="ghost" size="sm" className="shrink-0" onClick={onImportGoogleSlides}>
+          {t("media.importGoogleSlides")}
+        </Button>
+      ) : null}
     </div>
   )
 }

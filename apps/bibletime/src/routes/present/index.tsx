@@ -1,7 +1,9 @@
 import { useEffect } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
+import { useTranslation } from "@/modules/core/i18n"
 import { useLiveSlide } from "@/modules/library"
+import { useMediaAvailability } from "@/modules/media"
 import { DEFAULT_SLIDE_TEMPLATE, SlideFrame } from "@/modules/presentation"
 
 export const Route = createFileRoute("/present/")({
@@ -48,6 +50,8 @@ const toggleFullscreen = () => {
  */
 function PresentRoute() {
   const slide = useLiveSlide()
+  const { t } = useTranslation()
+  const { isMissing: isMediaMissing, missingReason, url: mediaUrl } = useMediaAvailability(slide?.media)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -65,10 +69,26 @@ function PresentRoute() {
     <div className="h-screen w-screen bg-black" onDoubleClick={toggleFullscreen}>
       <SlideFrame
         template={slide?.template ?? DEFAULT_SLIDE_TEMPLATE}
+        media={slide?.media}
+        // Resolved in *this* window. A URL minted in the console window
+        // would be meaningless here, which is why the payload carries a
+        // reference and each context resolves it for itself (see
+        // `enable-media-tab-on-web` design decision 6).
+        mediaUrl={mediaUrl}
+        isMediaMissing={Boolean(slide?.media) && isMediaMissing}
+        // Restarts playback from zero on every send, so re-sending a
+        // countdown restarts the countdown.
+        mediaPlaybackKey={slide?.sentAt}
         text={slide?.text}
         reference={slide?.reference}
         versionLabel={slide?.versionLabel}
-        emptyMessage="Esperando contenido…"
+        emptyMessage={
+          slide?.media && isMediaMissing
+            ? // No permission prompt on a projector: the grant has to happen
+              // in the console window, so that is where the user is sent.
+              t(missingReason === "needs-reconnect" ? "media.outputNeedsReconnect" : "media.missingFile")
+            : "Esperando contenido…"
+        }
         className="rounded-none"
         frameClassName="h-full w-full"
       />
