@@ -131,8 +131,39 @@ export const es: Record<keyof typeof en, string> = {
   "settings.projectStorage.resetToDefault": "Restablecer al valor predeterminado",
   "settings.projectStorage.webNote": "Los proyectos se guardan en el almacenamiento de este navegador — una ubicación personalizada solo está disponible en la app de escritorio.",
 
+  "settings.updates.label": "Actualizaciones",
+  "settings.updates.description": "Mantén BibleTime al día.",
+  "settings.updates.currentVersion": "Versión actual",
+  "settings.updates.checkNow": "Buscar ahora",
+  "settings.updates.checking": "Buscando actualizaciones…",
+  "settings.updates.upToDate": "Estás usando la última versión.",
+  "settings.updates.lastChecked": "Última comprobación: {{when}}.",
+  "settings.updates.neverChecked": "Todavía no se ha comprobado.",
+  "settings.updates.available": "La versión {{version}} ya está disponible.",
+  "settings.updates.releaseNotes": "Novedades",
+  "settings.updates.download": "Descargar actualización",
+  "settings.updates.downloading": "Descargando… {{progress}}",
+  "settings.updates.cancel": "Cancelar",
+  "settings.updates.cancelled": "Descarga cancelada.",
+  "settings.updates.downloaded":
+    "{{file}} se guardó en tu carpeta de Descargas. Ábrelo para terminar la instalación.",
+  "settings.updates.installHelp": "Guía de instalación",
+  "settings.updates.reveal": "Mostrar en la carpeta",
+  "settings.updates.downloadFailed": "La descarga no se completó.",
+  "settings.updates.retry": "Reintentar",
+  "settings.updates.checkFailed":
+    "No se pudo buscar actualizaciones en este momento.",
+  "settings.updates.noAsset":
+    "Todavía no hay una descarga publicada para esta plataforma.",
+  "settings.updates.openReleasePage": "Abrir la página de la versión",
+  "settings.updates.webNote":
+    "La versión web siempre ejecuta la última versión.",
+
+  "updates.banner.title": "BibleTime {{version}} ya está disponible",
+  "updates.banner.action": "Ver actualización",
+  "updates.banner.dismiss": "Descartar",
+
   "settings.systemInfo.label": "Información del sistema",
-  "settings.systemInfo.appVersion": "Versión de la app",
   "settings.systemInfo.platform": "Plataforma",
   "settings.systemInfo.platformWeb": "Web",
   "settings.systemInfo.platformDesktop": "Escritorio",

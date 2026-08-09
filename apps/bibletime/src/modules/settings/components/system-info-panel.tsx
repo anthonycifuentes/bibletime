@@ -15,10 +15,12 @@ function InfoRow({ label, value }: InfoRowProps) {
 }
 
 /**
- * App version + platform, and (only inside the Electron desktop shell)
- * Electron/Chrome/Node versions read from the `window.bibletime` preload
- * bridge. Falls back to the build-time `__APP_VERSION__` constant and a
- * "Web" platform label when that bridge is absent (the plain web build).
+ * Platform, and (only inside the Electron desktop shell) Electron/Chrome/Node
+ * versions read from the `window.bibletime` preload bridge. Shows a "Web"
+ * platform label when that bridge is absent (the plain web build).
+ *
+ * The app's own version lives in the Updates panel above, which owns
+ * everything about which version you're running and whether it's current.
  */
 export function SystemInfoPanel() {
   const { t } = useTranslation()
@@ -28,11 +30,9 @@ export function SystemInfoPanel() {
   // providers' SSR-safe defaults.
   const bibletime = typeof window !== "undefined" ? window.bibletime : undefined
   const versions = bibletime?.versions
-  const appVersion = bibletime?.appVersion ?? __APP_VERSION__
 
   return (
     <div className="flex flex-col gap-2">
-      <InfoRow label={t("settings.systemInfo.appVersion")} value={appVersion} />
       <InfoRow
         label={t("settings.systemInfo.platform")}
         value={versions ? t("settings.systemInfo.platformDesktop") : t("settings.systemInfo.platformWeb")}

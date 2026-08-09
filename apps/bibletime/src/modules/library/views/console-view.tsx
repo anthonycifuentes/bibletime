@@ -17,6 +17,7 @@ import { setLiveSlide } from "@/modules/library/services"
 import { readMediaDragPayload } from "@/modules/media"
 import { useTemplates } from "@/modules/templates"
 import { HeaderBar } from "@/modules/core/layout"
+import { UpdateBanner } from "@/modules/updates"
 import { useTranslation } from "@/modules/core/i18n"
 import {
   ResizableHandle,
@@ -205,6 +206,7 @@ export function ConsoleView() {
     return (
       <div className="flex h-svh flex-col">
         <HeaderBar />
+        <UpdateBanner />
         <div className="flex flex-1 items-center justify-center p-6">
           <ProjectLauncher
             projects={projects.projects}
@@ -221,6 +223,7 @@ export function ConsoleView() {
   return (
     <div className="flex h-svh flex-col">
       <HeaderBar />
+      <UpdateBanner />
 
       <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
         <ResizablePanel minSize="30%">

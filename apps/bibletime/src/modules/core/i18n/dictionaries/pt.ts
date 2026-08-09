@@ -131,8 +131,39 @@ export const pt: Record<keyof typeof en, string> = {
   "settings.projectStorage.resetToDefault": "Restaurar padrão",
   "settings.projectStorage.webNote": "Os projetos são salvos no armazenamento deste navegador — um local personalizado só está disponível no app de desktop.",
 
+  "settings.updates.label": "Atualizações",
+  "settings.updates.description": "Mantenha o BibleTime atualizado.",
+  "settings.updates.currentVersion": "Versão atual",
+  "settings.updates.checkNow": "Verificar agora",
+  "settings.updates.checking": "Procurando atualizações…",
+  "settings.updates.upToDate": "Você está usando a versão mais recente.",
+  "settings.updates.lastChecked": "Última verificação: {{when}}.",
+  "settings.updates.neverChecked": "Ainda não verificado.",
+  "settings.updates.available": "A versão {{version}} está disponível.",
+  "settings.updates.releaseNotes": "Novidades",
+  "settings.updates.download": "Baixar atualização",
+  "settings.updates.downloading": "Baixando… {{progress}}",
+  "settings.updates.cancel": "Cancelar",
+  "settings.updates.cancelled": "Download cancelado.",
+  "settings.updates.downloaded":
+    "{{file}} foi salvo na sua pasta Downloads. Abra-o para concluir a instalação.",
+  "settings.updates.installHelp": "Guia de instalação",
+  "settings.updates.reveal": "Mostrar na pasta",
+  "settings.updates.downloadFailed": "O download não foi concluído.",
+  "settings.updates.retry": "Tentar novamente",
+  "settings.updates.checkFailed":
+    "Não foi possível procurar atualizações agora.",
+  "settings.updates.noAsset":
+    "Ainda não há download publicado para esta plataforma.",
+  "settings.updates.openReleasePage": "Abrir a página da versão",
+  "settings.updates.webNote":
+    "A versão web sempre executa a versão mais recente.",
+
+  "updates.banner.title": "BibleTime {{version}} está disponível",
+  "updates.banner.action": "Ver atualização",
+  "updates.banner.dismiss": "Dispensar",
+
   "settings.systemInfo.label": "Informações do sistema",
-  "settings.systemInfo.appVersion": "Versão do app",
   "settings.systemInfo.platform": "Plataforma",
   "settings.systemInfo.platformWeb": "Web",
   "settings.systemInfo.platformDesktop": "Área de trabalho",

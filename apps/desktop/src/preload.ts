@@ -3,6 +3,26 @@ import { contextBridge, ipcRenderer } from "electron"
 contextBridge.exposeInMainWorld("bibletime", {
   versions: process.versions,
   appVersion: ipcRenderer.sendSync("app:get-version") as string,
+  updates: {
+    getState: () => ipcRenderer.invoke("updates:get-state"),
+    check: () => ipcRenderer.invoke("updates:check"),
+    download: (asset: unknown) => ipcRenderer.invoke("updates:download", asset),
+    cancelDownload: () => ipcRenderer.invoke("updates:cancel-download"),
+    revealDownload: () => ipcRenderer.invoke("updates:reveal-download"),
+    dismiss: (version: string) => ipcRenderer.invoke("updates:dismiss", version),
+    /**
+     * The only main -> renderer push in this bridge. `ipcRenderer` itself
+     * never crosses the context boundary, and the `IpcRendererEvent` is
+     * dropped rather than forwarded — the renderer gets a plain, serializable
+     * payload and an unsubscribe to call from an effect's cleanup.
+     */
+    onDownloadProgress: (callback: (progress: { receivedBytes: number; totalBytes: number | null }) => void) => {
+      const listener = (_event: unknown, progress: { receivedBytes: number; totalBytes: number | null }) =>
+        callback(progress)
+      ipcRenderer.on("updates:download-progress", listener)
+      return () => ipcRenderer.removeListener("updates:download-progress", listener)
+    },
+  },
   templates: {
     list: () => ipcRenderer.invoke("templates:list"),
     save: (template: unknown) => ipcRenderer.invoke("templates:save", template),

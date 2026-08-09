@@ -81,12 +81,36 @@ Check each artifact before publishing:
 - [ ] The app opens to the **console**, not the landing page
 - [ ] Bible, Songs, Media, and Notes tabs all load
 - [ ] Presenting to a second display works
+- [ ] **Settings → Updates** shows the new version number and "You're running the latest version"
+      (it will still say this against the *previous* published release until you publish this one)
 
 Then publish:
 
 ```bash
 gh release edit v0.1.0 --draft=false --latest
 ```
+
+**Publishing is what ships the update to existing installs.** The in-app update checker calls
+`GET /repos/anthonycifuentes/bibletime/releases/latest` unauthenticated, and that endpoint does not
+see drafts. Until you run the command above, every installed copy keeps reporting "You're running
+the latest version" no matter how long the draft has existed. This is deliberate — an unverified
+build should not be advertised to users — but it does mean the release isn't *done* at the moment
+CI goes green.
+
+`--latest` matters too: the endpoint returns the release GitHub marks as latest, so a release
+published without it stays invisible to the checker.
+
+Confirm the checker can see it:
+
+```bash
+curl -s https://api.github.com/repos/anthonycifuentes/bibletime/releases/latest \
+  | grep -E '"tag_name"|"name": "BibleTime-'
+```
+
+The tag must be the one you just published, and the asset list must include a `.dmg` for both
+`arm64` and `x64`, an `.exe`, and an `.AppImage`. The desktop app matches assets by extension plus
+architecture, so a platform missing from that list simply gets no download button — its users are
+sent to the release page instead.
 
 Finally, open <https://bibletime-app.vercel.app>, click **Download — free**, and confirm it lands
 on a Releases page with downloadable assets.
@@ -131,6 +155,15 @@ To enable signing later:
 
 The workflow structure doesn't change; signing is additive. Until then,
 [`install.md`](./install.md) documents the warnings users will see.
+
+Signing is also what gates **real** auto-update. The in-app updater currently downloads the right
+installer and reveals it in the file manager, leaving the user to run it — because
+`electron-updater`'s macOS path is Squirrel.Mac, which validates the downloaded bundle's signature
+and rejects the ad-hoc signature `scripts/adhoc-sign.cjs` applies. Adopting it before signing
+exists would ship a "Restart to update" button that silently fails for most users. Once signing is
+in place, the swap is contained: implement the existing `UpdateDriver` interface
+(`apps/bibletime/src/modules/updates/interfaces`) with an install-on-quit driver, and the banner
+and Settings panel keep working unchanged.
 
 ---
 
