@@ -15,12 +15,17 @@ Three files, all to the same number:
 | `apps/desktop/package.json` | **The authoritative one.** electron-builder stamps this into the binary and into every artifact filename |
 | `apps/bibletime/package.json` | Kept in sync so the three don't drift |
 | `package.json` (root) | Same |
+| `apps/bibletime/src/modules/landing/lib/downloads.ts` | `LATEST_VERSION` — the landing page's direct download links are built from it |
 
 ```bash
 grep '"version"' package.json apps/bibletime/package.json apps/desktop/package.json
+grep 'LATEST_VERSION =' apps/bibletime/src/modules/landing/lib/downloads.ts
 ```
 
-All three must print the same value before you tag.
+All four must print the same value before you tag. **`LATEST_VERSION` is the one that bites**:
+asset filenames carry the version, so if it lags a release the landing page's download buttons
+404. They fail loudly rather than serving an old build, and every download surface also links the
+Releases index as an escape hatch — but check it anyway.
 
 ### 2. Verify locally
 
