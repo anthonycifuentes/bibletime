@@ -15,7 +15,11 @@ concurrency:
 
 jobs:
   check:
-    name: Lint, typecheck, test, build
+    # Kept verbatim because `main`'s ruleset requires a status check of this
+    # exact name — renaming the job silently removes the required check and
+    # blocks every PR. The job does run tests (see the Test step); change the
+    # ruleset's required context first if this name should follow.
+    name: Lint, typecheck, build
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
