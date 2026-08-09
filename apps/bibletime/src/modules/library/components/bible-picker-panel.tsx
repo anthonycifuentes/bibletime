@@ -15,7 +15,7 @@ import {
 import type { BibleVersionSummary } from "@/modules/bible"
 import type { BiblePassageItemData } from "@/modules/library/interfaces"
 import { splitVerseText } from "@/modules/library/lib/split-verse-text"
-import { setLiveSlide } from "@/modules/library/services"
+import { openOutputWindow, setLiveSlide } from "@/modules/library/services"
 import { VersionListPanel } from "@/modules/library/components/version-list-panel"
 import { SlideFrame } from "@/modules/presentation"
 import { useTemplates } from "@/modules/templates"
@@ -174,7 +174,7 @@ export function BiblePickerPanel({
       versionLabel: selectedVersion?.local_abbreviation,
       template: effectiveTemplate,
     })
-    window.open("/present", "bibletime-present")
+    openOutputWindow()
   }
 
   const handleConvert = () => {
