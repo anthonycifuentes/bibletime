@@ -16,6 +16,12 @@ export const CONSOLE_ROUTE = "/library" as const
  * The bento grid, in reading order. `image: null` renders the placeholder
  * frame at the card's final aspect ratio, so dropping a real screenshot in
  * later moves nothing on the page.
+ *
+ * The cards that have a screenshot come first and take a two-column cell —
+ * a desktop window shrunk into one column is unreadable. The two that
+ * don't yet sit last as small cells, which is also what keeps the grid
+ * gapless: four `md` cards fill two full rows, then the pair of `sm` cards
+ * finishes the row the last one starts.
  */
 export const LANDING_CARDS: LandingCard[] = [
   {
@@ -24,8 +30,8 @@ export const LANDING_CARDS: LandingCard[] = [
     blurbKey: "landing.card.bible.blurb",
     detailKey: "landing.card.bible.detail",
     altKey: "landing.card.bible.alt",
-    image: null,
-    aspect: "wide",
+    image: "/img/bible-tab.png",
+    aspect: "screen",
     span: "md",
   },
   {
@@ -34,9 +40,32 @@ export const LANDING_CARDS: LandingCard[] = [
     blurbKey: "landing.card.songs.blurb",
     detailKey: "landing.card.songs.detail",
     altKey: "landing.card.songs.alt",
-    image: null,
-    aspect: "phone",
-    span: "sm",
+    image: "/img/songs-tab.png",
+    aspect: "screen",
+    span: "md",
+  },
+  {
+    id: "templates",
+    titleKey: "landing.card.templates.title",
+    blurbKey: "landing.card.templates.blurb",
+    detailKey: "landing.card.templates.detail",
+    altKey: "landing.card.templates.alt",
+    image: "/img/templates.png",
+    aspect: "screen",
+    span: "md",
+  },
+  {
+    id: "presentation",
+    titleKey: "landing.card.presentation.title",
+    blurbKey: "landing.card.presentation.blurb",
+    detailKey: "landing.card.presentation.detail",
+    altKey: "landing.card.presentation.alt",
+    // The only shot that isn't a window: it's the projector output, a 16:9
+    // slide letterboxed into a 4:3 file, so a 16:9 frame crops the bars
+    // back off and leaves exactly the slide.
+    image: "/img/present.png",
+    aspect: "wide",
+    span: "md",
   },
   {
     id: "media-notes",
@@ -49,33 +78,13 @@ export const LANDING_CARDS: LandingCard[] = [
     span: "sm",
   },
   {
-    id: "templates",
-    titleKey: "landing.card.templates.title",
-    blurbKey: "landing.card.templates.blurb",
-    detailKey: "landing.card.templates.detail",
-    altKey: "landing.card.templates.alt",
-    image: null,
-    aspect: "wide",
-    span: "md",
-  },
-  {
-    id: "presentation",
-    titleKey: "landing.card.presentation.title",
-    blurbKey: "landing.card.presentation.blurb",
-    detailKey: "landing.card.presentation.detail",
-    altKey: "landing.card.presentation.alt",
-    image: null,
-    aspect: "wide",
-    span: "md",
-  },
-  {
     id: "offline",
     titleKey: "landing.card.offline.title",
     blurbKey: "landing.card.offline.blurb",
     detailKey: "landing.card.offline.detail",
     altKey: "landing.card.offline.alt",
     image: null,
-    aspect: "wide",
-    span: "md",
+    aspect: "phone",
+    span: "sm",
   },
 ]

@@ -1,117 +1,159 @@
+<div align="center">
+
 # BibleTime
 
-A minimalist, local-first presentation app for churches and ministries. BibleTime displays Bible verses, sermon slides, song lyrics, notes, images, and videos on a projector or external screen, with a simple control interface for the operator.
+**A free, local-first presentation app for churches and ministries.**
 
-It ships as:
+Bible verses, song lyrics, sermon slides, notes, images, and video — on your projector, with a
+clean control panel for whoever's running the booth.
 
-- **Desktop app** (Mac and Windows) via Electron
-- **Web app** accessible from any browser
+[**⬇ Download**](https://github.com/anthonycifuentes/bibletime/releases/latest) ·
+[**🌐 Try it in your browser**](https://bibletime-app.vercel.app) ·
+[**📖 Install guide**](./docs/install.md)
 
-Both share the same core codebase and UI. For this phase, everything is local-first: content, media, and service plans are stored on the user's machine — no account, no login, no cloud dependency.
+[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](./LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/anthonycifuentes/bibletime/total.svg)](https://github.com/anthonycifuentes/bibletime/releases)
+[![CI](https://github.com/anthonycifuentes/bibletime/actions/workflows/ci.yml/badge.svg)](https://github.com/anthonycifuentes/bibletime/actions/workflows/ci.yml)
 
-## Motivation
+</div>
 
-BibleTime sits between two existing approaches, aiming to take the best of both:
+![The BibleTime console — service plan on the left, slides in the middle, live preview on the right](./apps/bibletime/public/img/bible-tab.png)
 
-- **ProPresenter** — the industry standard for church presentation. Powerful (multi-output, stage displays, live triggers, media handling) but heavy, expensive, and more complex than most small churches or youth groups need.
-- **Wiswords** — free, web-based, and very easy to use, focused on projecting Bible verses in Spanish. Simple onboarding, but it requires an account and an internet connection, and is scoped mainly to Scripture projection rather than full-service presentation (songs, sermons, notes, media).
+---
 
-BibleTime's niche: ProPresenter's breadth of content types, Wiswords' simplicity, and full offline/local operation. No server, no login screen, no subscription — just open the app and start building today's service.
+## What it is
 
-## Design Principles
+BibleTime sits between ProPresenter and a slide deck: enough breadth to run a whole service,
+simple enough that a volunteer can use it without training, and fully usable with the wifi down.
 
-- **Minimalist by default** — the operator's screen should feel closer to a clean checklist than a professional NLE. Few buttons, clear hierarchy, no nested settings menus for common tasks.
-- **Local-first** — a service plan built five minutes before church starts should never depend on internet connectivity.
-- **Fast to learn** — a volunteer with no training should be able to project a verse or a lyric slide within a minute of opening the app.
-- **Two-screen mental model** — one screen for the operator (control view), one for the congregation (output view). This mirrors how every church already thinks about their setup (laptop + projector).
-- **Visually calm output** — clean typography, generous whitespace, subtle backgrounds/transitions rather than busy templates. The projected output stays plain and legible; the control panel is where a more distinct, modern feel (e.g. a liquid-glass/translucency treatment) can live without competing with the content.
+- **Free, forever.** No account, no login, no subscription, no trial.
+- **Works offline.** Your service plan shouldn't depend on the church internet.
+- **Runs anywhere.** Desktop app for macOS, Windows, and Linux — or straight in a browser.
 
-## Target Users
+---
 
-- Small-to-mid-size churches and church plants
-- Youth groups and small-group Bible studies
-- Independent preachers/ministries preparing their own services
-- Anyone currently improvising with PowerPoint/Keynote for church slides
+## Features
 
-## Core Features
+| | |
+| --- | --- |
+| 📖 **Bible** | Browse by book → chapter → verse or jump to a reference. The Reina-Valera 1960 is bundled and offline; more translations download on demand. |
+| 🎵 **Songs** | Lyrics split into labeled sections (verse, chorus, bridge), with slide-by-slide navigation and next-slide preview while you sing. |
+| 🖼️ **Media** | Drag in images and video. Send them straight to the screen or use them as slide backgrounds. |
+| 📝 **Notes** | Template-based note slides for announcements and pre-service rotation. |
+| 🎨 **Templates** | Reusable slide styles — typography, gradients, and animated backgrounds — applied across a whole service. |
+| 📺 **Presentation** | A console for the operator, a clean output window for the congregation. No control UI ever leaks onto the projector. |
+| 📁 **Projects** | Build a running order from any module, save it, and duplicate last week's plan as a starting point. |
 
-### Bible Module
-- Offline Bible text, bundled locally (starting with one or two public-domain translations per language — e.g. an open Reina-Valera edition for Spanish, WEB/KJV for English — to avoid licensing issues; more versions can be added as data packs later)
-- Search/browse by book → chapter → verse, and jump-to-reference (e.g. type "Juan 3:16")
-- One-click "send to output" for a verse or verse range
-- Recent/favorite verses list
+<details>
+<summary><b>More screenshots</b></summary>
 
-### Song Lyrics Module
-- Song library: title, author/tags, lyrics broken into labeled sections (verse, chorus, bridge)
-- Slide-by-slide navigation while singing, with next-slide preview
-- Basic song editor (paste lyrics, auto-split into slides, reorder sections)
+**Songs**
+![The Songs tab](./apps/bibletime/public/img/songs-tab.png)
 
-### Sermon / Slide Module
-- Simple slide builder: text slides, image slides, title slides
-- Reorder, duplicate, and group slides into a sermon deck
-- *(Stretch/Phase 2: import existing PowerPoint/Keynote/PDF decks)*
+**Templates**
+![The Templates library](./apps/bibletime/public/img/templates.png)
 
-### Notes Module
-- Template-based note slides (image/background + heading + body text)
-- Loop mode for pre-service note rotation
+**Template builder**
+![Building a new template](./apps/bibletime/public/img/new-template.png)
 
-### Media Library
-- Local import of images and videos (drag-and-drop)
-- Thumbnail grid, basic tagging/search
-- Videos and images can be sent directly to output, or embedded as slide backgrounds
+**Presenting**
+![The presentation view](./apps/bibletime/public/img/present.png)
 
-### Service Plan (Playlist)
-- Build a running order for the service by dragging in items from any module (songs, verses, sermon slides, notes, media)
-- Save/load service plans, duplicate a previous week's plan as a starting point
+</details>
 
-### Control Panel & Output
-- Control window: library on one side, current service plan in the middle, live/next preview on the right — the operator's home screen
-- Output window: the actual congregation-facing display, sent to a second monitor/projector, background is always clean (no operator UI leaking through)
-- Blackout/clear-screen shortcut
-- Basic playback controls for video/audio backgrounds (play, pause, loop, volume)
-- *(Phase 2: stage display/confidence monitor with next-slide + clock, for the person leading up front)*
+---
 
-### Import/Export
-- Export the whole library + service plans as a single local backup file
-- Import to restore or move to another machine — this is the "sync" workaround until real cloud sync exists
+## Install
 
-## Project Structure
+**[Download the latest release →](https://github.com/anthonycifuentes/bibletime/releases/latest)**
 
-This is a pnpm/Turborepo monorepo:
+| Your computer | File |
+| --- | --- |
+| Mac (Apple Silicon) | `BibleTime-<version>-arm64.dmg` |
+| Mac (Intel) | `BibleTime-<version>-x64.dmg` |
+| Windows | `BibleTime-<version>-x64.exe` |
+| Linux | `BibleTime-<version>-x64.AppImage` |
 
-```
-apps/
-  web/        # Web app (TanStack Start)
-packages/
-  ui/         # Shared shadcn/ui component library
-```
+> [!IMPORTANT]
+> **Your computer will warn you that the app is unrecognized.** BibleTime's builds aren't
+> code-signed — certificates cost more than a free project has — so macOS, Windows, and Linux
+> each show a warning the first time you open it. The
+> **[install guide](./docs/install.md)** has the exact steps for each platform.
+
+Prefer not to install anything? BibleTime runs in the browser at
+**<https://bibletime-app.vercel.app>**.
+
+---
 
 ## Development
 
+A pnpm + Turborepo monorepo. You need **Node.js 20+** and **pnpm 10.33.4** (`corepack enable`
+gets you the right version).
+
 ```bash
+git clone https://github.com/anthonycifuentes/bibletime.git
+cd bibletime
 pnpm install
-pnpm dev
+pnpm dev                 # http://localhost:3000
 ```
 
-Other scripts:
+| Command | Does |
+| --- | --- |
+| `pnpm dev` | Run the web app |
+| `pnpm --filter desktop dev` | Run the Electron shell against it |
+| `pnpm build` | Build everything |
+| `pnpm lint` | Lint everything |
+| `pnpm typecheck` | Typecheck everything |
+| `pnpm --filter desktop package` | Build installers into `apps/desktop/release/` |
 
-```bash
-pnpm build      # build all apps/packages
-pnpm lint       # lint all apps/packages
-pnpm format     # format with prettier
-pnpm typecheck  # typecheck all apps/packages
+```
+apps/
+  bibletime/   # the app — TanStack Start (React), package name "web"
+  desktop/     # Electron shell, package name "desktop"
+packages/
+  ui/          # shared shadcn/ui components
+  fonts/       # bundled typefaces
 ```
 
-### Adding UI components
+See [`docs/architecture.md`](./docs/architecture.md) for how the pieces fit together — especially
+the desktop shell, which serves the app from a bundled SSR server rather than static files.
 
-Add shadcn/ui components to the shared `ui` package by running this at the repo root:
+---
 
-```bash
-pnpm dlx shadcn@latest add button -c apps/web
-```
+## Documentation
 
-Components are placed in `packages/ui/src/components` and imported as:
+| | |
+| --- | --- |
+| [Install guide](./docs/install.md) | Per-platform install, unsigned-build warnings, projector setup |
+| [Architecture](./docs/architecture.md) | Design principles, repo layout, module conventions, OpenSpec flow |
+| [Bible data](./docs/bible-data.md) | Where Scripture text comes from, its licensing, adding translations |
+| [Release runbook](./docs/release.md) | Cutting a release and configuring repository protections |
 
-```tsx
-import { Button } from "@workspace/ui/components/button";
-```
+---
+
+## Contributing
+
+Contributions are welcome. Start with [`CONTRIBUTING.md`](./CONTRIBUTING.md) — it covers setup,
+the checks your PR needs to pass, the module conventions, and how changes get planned.
+
+- 🐛 [Report a bug](https://github.com/anthonycifuentes/bibletime/issues/new/choose)
+- 💡 [Request a feature](https://github.com/anthonycifuentes/bibletime/issues/new/choose)
+- 🤝 [Code of Conduct](./CODE_OF_CONDUCT.md)
+- 🔒 [Security policy](./SECURITY.md) — please don't file vulnerabilities as public issues
+
+---
+
+## License
+
+BibleTime's source code is [MIT licensed](./LICENSE) — free to use, modify, and distribute.
+
+> [!NOTE]
+> **Bundled fonts and Bible text are not covered by the MIT license.** In particular, the
+> Reina-Valera 1960 text is under copyright by Sociedades Bíblicas Unidas and is not public
+> domain. If you fork or redistribute BibleTime, read
+> [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) first.
+
+<div align="center">
+<br>
+Built for the church.
+</div>

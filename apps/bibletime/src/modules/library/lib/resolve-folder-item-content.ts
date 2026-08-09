@@ -1,5 +1,5 @@
 import type { MediaSlideData } from "@/modules/core/interfaces"
-import { DEFAULT_SLIDE_TEMPLATE } from "@/modules/presentation"
+import { DEFAULT_SLIDE_TEMPLATE, normalizeSlideTemplateOverride } from "@/modules/presentation"
 import type { SlideTemplate } from "@/modules/presentation"
 import type { SavedTemplate } from "@/modules/templates"
 import type { FolderItem } from "@/modules/library/interfaces"
@@ -28,12 +28,37 @@ export interface ResolvedFolderItemContent {
   emptyMessage?: string
 }
 
+/**
+ * The template a slide points at, *without* its own style override — the base
+ * the override layers over. The style dialog needs this separately from the
+ * merged result, since clearing an override has to preview the template's own
+ * look again.
+ */
+export const resolveItemBaseTemplate = (item: FolderItem, templates: SavedTemplate[]): SlideTemplate =>
+  templates.find((saved) => saved.id === item.templateId)?.template ?? DEFAULT_SLIDE_TEMPLATE
+
+/**
+ * The slide's effective style: its template, with its own partial
+ * `templateOverride` (if any) layered on top. This is the one place the merge
+ * happens, which is what makes a per-slide override universal — the console
+ * card, the preview panel, and the `/present` payload all resolve through
+ * here, so none of them needs to know overrides exist.
+ *
+ * The override is normalized (not trusted) on the way in: a field this build
+ * can't render is dropped so the template supplies it instead. See
+ * `normalizeSlideTemplateOverride`.
+ */
+export const resolveItemTemplate = (item: FolderItem, templates: SavedTemplate[]): SlideTemplate => {
+  const base = resolveItemBaseTemplate(item, templates)
+  return item.templateOverride ? { ...base, ...normalizeSlideTemplateOverride(item.templateOverride) } : base
+}
+
 /** Resolves a `FolderItem` + the template library into what `SlidePreview` needs, regardless of content type. */
 export const resolveFolderItemContent = (
   item: FolderItem,
   templates: SavedTemplate[]
 ): ResolvedFolderItemContent => {
-  const template = templates.find((saved) => saved.id === item.templateId)?.template ?? DEFAULT_SLIDE_TEMPLATE
+  const template = resolveItemTemplate(item, templates)
 
   switch (item.type) {
     case "bible-passage":

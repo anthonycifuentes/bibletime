@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/anthonycifuentes/bibletime/security/advisories/new
+    about: >-
+      Do not open a public issue for a security problem. Report it privately here so it can be
+      fixed before it is disclosed. See SECURITY.md for what is in scope.
+
+  - name: 📖 Installation help
+    url: https://github.com/anthonycifuentes/bibletime/blob/main/docs/install.md
+    about: >-
+      The app won't open, or your system warns you about it? Builds are unsigned — the install
+      docs cover the warning on each platform.
+
+  - name: 💬 Question about contributing
+    url: https://github.com/anthonycifuentes/bibletime/blob/main/CONTRIBUTING.md
+    about: Setup, project structure, commit conventions, and how changes get planned.

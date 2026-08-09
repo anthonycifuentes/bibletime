@@ -68,6 +68,19 @@ interface FolderItemOf<TType extends FolderItemType, TData> {
   type: TType
   /** A `SavedTemplate` id (see `@/modules/templates`); absent means the default template. */
   templateId?: string
+  /**
+   * This one slide's own style, layered over `templateId`'s template at
+   * render time (see `resolveFolderItemContent`). Deliberately *partial*:
+   * only the fields the user actually changed are present, and absent means
+   * "follow the template exactly". A full snapshot would detach the slide
+   * from its template — editing that template later would no longer reach
+   * the slide at all — whereas a partial keeps the template as the base for
+   * everything untouched, which is what "make just this slide bigger"
+   * means. Storing it on the item is also what makes it free to persist:
+   * folder saves, project autosave, and `ProjectFile` export/import all
+   * carry `items` wholesale already.
+   */
+  templateOverride?: Partial<SlideTemplate>
   data: TData
 }
 

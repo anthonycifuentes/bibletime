@@ -206,6 +206,13 @@ export const pt: Record<keyof typeof en, string> = {
   "library.dragToReorder": "Arrastar para reordenar",
   "library.previewEmpty": "Selecione um slide para pré-visualizá-lo aqui.",
   "library.sendToOutput": "Apresentar",
+  "library.editStyle": "Editar estilo",
+  "library.editStyleTitle": "Editar estilo do slide",
+  "library.editStyleDescription": "As alterações se aplicam somente a este slide — nenhum modelo é criado ou modificado.",
+  "library.editStyleDescriptionMultiple":
+    "As alterações se aplicam somente aos {{count}} slides selecionados — nenhum modelo é criado ou modificado.",
+  "library.editStyleReset": "Usar o estilo do modelo",
+  "library.save": "Salvar",
 
   "songs.searchPlaceholder": "Pesquisar músicas",
   "songs.searchAriaLabel": "Pesquisar músicas por título, autor ou letra",
@@ -417,7 +424,7 @@ export const pt: Record<keyof typeof en, string> = {
   "landing.card.templates.blurb": "Tipografia, cor e fundos definidos uma vez.",
   "landing.card.templates.detail":
     "Monte um modelo — tipos de letra, tamanhos, alinhamento, cores, uma imagem de fundo ou um gradiente — e todos os slides feitos com ele saem iguais. Mude o modelo depois e os slides acompanham, por isso um culto inteiro muda de estilo sem mexer num único slide.",
-  "landing.card.templates.alt": "O editor de modelos com os controlos de tipografia ao lado da pré-visualização",
+  "landing.card.templates.alt": "O separador Modelos com os modelos guardados ao lado dos slides que os usam",
 
   "landing.card.presentation.title": "Um segundo ecrã que se porta bem",
   "landing.card.presentation.blurb": "Uma janela própria para o projetor, comandada da sua.",

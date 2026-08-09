@@ -46,6 +46,21 @@ export const FONT_REGISTRY: FontRegistryEntry[] = [
   { id: "roboto", label: "Roboto", stack: '"Roboto", sans-serif' },
 ]
 
+/**
+ * The bounds of every font-size control in the app — the template editor and
+ * the per-slide style dialog both read them from here, so the two can't drift
+ * apart. Sizes are in reference-canvas pixels (see `REFERENCE_WIDTH`), so
+ * `MAX_FONT_SIZE` is roughly a single very large word across a projector;
+ * anything that doesn't fit its box is shrunk by `useAutoFitFontScale` rather
+ * than clipped, which is what makes the high ceiling safe to offer.
+ */
+export const MIN_FONT_SIZE = 16
+export const MAX_FONT_SIZE = 800
+
+/** Brings a font size from storage, an imported template, or an imported project into `[MIN_FONT_SIZE, MAX_FONT_SIZE]`. */
+export const clampFontSize = (size: number): number =>
+  Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, size))
+
 export const isKnownFontId = (id: unknown): id is string =>
   typeof id === "string" && FONT_REGISTRY.some((entry) => entry.id === id)
 

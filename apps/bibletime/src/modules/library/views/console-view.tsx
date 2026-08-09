@@ -1,3 +1,5 @@
+import { useState } from "react"
+
 import { useConsoleStore } from "@/modules/library/actions/use-console-store"
 import { useProjectAutosave } from "@/modules/library/actions/use-project-autosave"
 import { useLibrary } from "@/modules/library/actions/use-library"
@@ -7,6 +9,7 @@ import { FolderTree } from "@/modules/library/components/folder-tree"
 import { PreviewPanel } from "@/modules/library/components/preview-panel"
 import { ProjectLauncher } from "@/modules/library/components/project-launcher"
 import { SlideConsole } from "@/modules/library/components/slide-console"
+import { SlideStyleDialog } from "@/modules/library/components/slide-style-dialog"
 import { getDescendantIds, getFolderDepth } from "@/modules/library/lib/build-folder-tree"
 import { resolveFolderItemContent } from "@/modules/library/lib/resolve-folder-item-content"
 import type { MediaSlideData } from "@/modules/media"
@@ -67,6 +70,47 @@ export function ConsoleView() {
     (item) => item.id === lastSelectedItemId
   )
 
+  /**
+   * Which slides the per-slide style editor is open for, and which one's
+   * current style it starts from. Held here rather than inside `SlideConsole`
+   * (where the template picker lives) because all three entry points funnel
+   * into it — including the sidebar tree's, which is outside the console and
+   * can target a slide in a folder that isn't the open one, so the folder id
+   * travels with the request instead of being read off the open folder.
+   */
+  const [styleEditor, setStyleEditor] = useState<{
+    folderId: string
+    itemIds: string[]
+    seedItemId: string
+  } | null>(null)
+
+  const styleEditorFolder = library.folders.find(
+    (folder) => folder.id === styleEditor?.folderId
+  )
+  const styleEditorItem = styleEditorFolder?.items.find(
+    (item) => item.id === styleEditor?.seedItemId
+  )
+
+  const openStyleEditor = (
+    folderId: string,
+    itemIds: string[],
+    seedItemId: string | undefined
+  ) => {
+    // The bulk action supplies no seed, so it falls back to the last-selected
+    // slide — but only when that slide is actually one of the targets.
+    // `selectItem` stamps `lastSelectedItemId` even when an additive click
+    // *deselects* a slide, so it can point outside the selection, and seeding
+    // the preview from a slide the save won't touch would just misinform.
+    const preferred =
+      seedItemId ??
+      (lastSelectedItemId && itemIds.includes(lastSelectedItemId)
+        ? lastSelectedItemId
+        : undefined)
+    const seed = preferred ?? itemIds.at(-1)
+    if (!seed) return
+    setStyleEditor({ folderId, itemIds, seedItemId: seed })
+  }
+
   /** Resolves a slide from whichever folder it's actually in (not necessarily the open one — a sidebar-tree slide's folder may not be) and sends it to the presentation output. */
   const presentFolderItem = (folderId: string, itemId: string) => {
     const targetFolder = library.folders.find(
@@ -97,6 +141,13 @@ export function ConsoleView() {
   const onPrepareTreeItem = (itemId: string, folderId: string) => {
     openFolder(folderId)
     selectItem(itemId, { additive: false })
+  }
+
+  /** Opens the style editor for a sidebar-tree slide — its folder may not be the open one, so it's opened (and the slide selected) first, exactly as `onPrepareTreeItem` does. */
+  const onEditTreeItemStyle = (itemId: string, folderId: string) => {
+    openFolder(folderId)
+    selectItem(itemId, { additive: false })
+    openStyleEditor(folderId, [itemId], itemId)
   }
 
   /** Same as `onPrepareTreeItem`, but immediately presents too — the sidebar tree's double-click shortcut. */
@@ -201,6 +252,7 @@ export function ConsoleView() {
                 onDeleteItem={(itemId, folderId) =>
                   void library.removeFolderItems(folderId, [itemId])
                 }
+                onEditItemStyle={onEditTreeItemStyle}
                 onDropMediaOnFolder={onDropMediaOnFolder}
                 activeProjectName={
                   projects.projects.find(
@@ -244,6 +296,10 @@ export function ConsoleView() {
                       itemIds,
                       templateId
                     )
+                }}
+                onEditStyle={(itemIds, seedItemId) => {
+                  if (openFolderId)
+                    openStyleEditor(openFolderId, itemIds, seedItemId)
                 }}
               />
             </main>
@@ -416,6 +472,26 @@ export function ConsoleView() {
           />
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {styleEditor && styleEditorItem ? (
+        <SlideStyleDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setStyleEditor(null)
+          }}
+          item={styleEditorItem}
+          targetCount={styleEditor.itemIds.length}
+          templates={templatesState.templates}
+          canUseVideoBackground={templatesState.supportsVideoBackground}
+          onSave={(override) =>
+            void library.applyStyleOverrideToItems(
+              styleEditor.folderId,
+              styleEditor.itemIds,
+              override
+            )
+          }
+        />
+      ) : null}
     </div>
   )
 }

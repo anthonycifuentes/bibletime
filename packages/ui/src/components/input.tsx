@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
-import { cva, type VariantProps } from "class-variance-authority"
+import { cva } from "class-variance-authority"
+import type { VariantProps } from "class-variance-authority"
 
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -24,7 +25,8 @@ function Input({
   type,
   size,
   ...props
-}: Omit<React.ComponentProps<"input">, "size"> & VariantProps<typeof inputVariants>) {
+}: Omit<React.ComponentProps<"input">, "size"> &
+  VariantProps<typeof inputVariants>) {
   return (
     <InputPrimitive
       type={type}

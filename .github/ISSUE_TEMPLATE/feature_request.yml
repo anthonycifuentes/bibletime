@@ -1,0 +1,59 @@
+name: Feature request
+description: Suggest something BibleTime should be able to do
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        BibleTime aims to stay minimal — the goal is that a volunteer with no training can
+        project a verse within a minute of opening the app. The most useful thing you can tell
+        us is the **problem**, not the solution; that leaves room for a simpler answer than the
+        one either of us thought of first.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do that BibleTime makes hard or impossible right now?
+      placeholder: >-
+        During the service I need to jump back to a verse I showed ten minutes ago, and I have to
+        search for it again from scratch.
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What do you do today instead?
+      description: >-
+        Your current workaround tells us how painful this is and often suggests the right shape
+        for a fix.
+      placeholder: I keep a sticky note with the references and retype them.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to see?
+      description: Optional. If you have a specific idea, describe it.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app?
+      options:
+        - Bible
+        - Songs
+        - Sermons / slides
+        - Media
+        - Notes
+        - Templates and backgrounds
+        - Presentation output
+        - Library / projects
+        - Settings
+        - Something else
+    validations:
+      required: false

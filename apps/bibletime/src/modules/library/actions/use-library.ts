@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 import type { Folder, FolderItem } from "@/modules/library/interfaces"
+import type { SlideTemplate } from "@/modules/presentation"
 import { getDescendantIds } from "@/modules/library/lib/build-folder-tree"
 import type { FolderTreeNodeData } from "@/modules/library/lib/build-folder-tree"
 import { getLibraryStorage } from "@/modules/library/services"
@@ -266,6 +267,15 @@ export const useLibrary = (activeProjectId: string | null) => {
     [allFolders, refresh]
   )
 
+  /**
+   * Points a set of slides at a template. Deliberately leaves each item's
+   * `templateOverride` alone: an override is defined as a layer *on top of*
+   * whichever template the slide points at, so swapping the base underneath
+   * and keeping the deliberate per-slide tweaks is the consistent behavior.
+   * Clearing an override silently here would destroy the user's work as a
+   * side effect of an unrelated action — the style dialog's reset is the one
+   * explicit way to drop it.
+   */
   const applyTemplateToItems = useCallback(
     async (folderId: string, itemIds: string[], templateId: string) => {
       const existing = allFolders.find((folder) => folder.id === folderId)
@@ -275,6 +285,37 @@ export const useLibrary = (activeProjectId: string | null) => {
       const items = existing.items.map((item) =>
         targetIds.has(item.id) ? { ...item, templateId } : item
       )
+
+      await storage.save({ ...existing, items, updatedAt: Date.now() })
+      await refresh()
+    },
+    [allFolders, refresh]
+  )
+
+  /**
+   * Sets (or clears) a per-slide style override on a set of slides — the
+   * style dialog's write path, mirroring `applyTemplateToItems`. Passing
+   * `null` or an empty patch *removes* the field rather than storing `{}`,
+   * so "no override" stays a single representable state and nothing
+   * downstream has to treat an empty object as meaningful.
+   *
+   * Never touches `templateId`: an override changes how a slide looks, not
+   * which template it follows.
+   */
+  const applyStyleOverrideToItems = useCallback(
+    async (folderId: string, itemIds: string[], override: Partial<SlideTemplate> | null) => {
+      const existing = allFolders.find((folder) => folder.id === folderId)
+      if (!existing) return
+
+      const targetIds = new Set(itemIds)
+      const hasOverride = override !== null && Object.keys(override).length > 0
+
+      const items = existing.items.map((item) => {
+        if (!targetIds.has(item.id)) return item
+        if (hasOverride) return { ...item, templateOverride: override }
+        const { templateOverride: _removed, ...withoutOverride } = item
+        return withoutOverride
+      })
 
       await storage.save({ ...existing, items, updatedAt: Date.now() })
       await refresh()
@@ -297,5 +338,6 @@ export const useLibrary = (activeProjectId: string | null) => {
     removeFolderItems,
     reorderFolderItems,
     applyTemplateToItems,
+    applyStyleOverrideToItems,
   }
 }

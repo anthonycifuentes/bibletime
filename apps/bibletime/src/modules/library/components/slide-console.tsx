@@ -55,6 +55,13 @@ interface SlideConsoleProps {
   /** Renames one slide's caption from its context menu — song slides only. */
   onRenameItem: (itemId: string, label: string) => void
   onApplyTemplate: (itemIds: string[], templateId: string) => void
+  /**
+   * Opens the per-slide style editor for a set of slides. `seedItemId` is the
+   * slide whose current style the editor starts from — the clicked card for a
+   * single-slide edit; left out for the bulk action, where the console shell
+   * resolves it from the last-selected slide.
+   */
+  onEditStyle: (itemIds: string[], seedItemId?: string) => void
   /** Files dropped from the Media tab's grid — appended to this folder. */
   onDropMedia?: () => void
 }
@@ -80,6 +87,7 @@ export function SlideConsole({
   onRemove,
   onRenameItem,
   onApplyTemplate,
+  onEditStyle,
   onDropMedia,
 }: SlideConsoleProps) {
   const { t } = useTranslation()
@@ -138,6 +146,11 @@ export function SlideConsole({
         disabled: !hasSelection,
       },
       {
+        id: "edit-style",
+        label: t("library.editStyle"),
+        disabled: !hasSelection,
+      },
+      {
         id: "remove",
         label: t("library.removeSelected"),
         disabled: !hasSelection,
@@ -161,6 +174,9 @@ export function SlideConsole({
         break
       case "apply-template":
         setPickerOpen(true)
+        break
+      case "edit-style":
+        onEditStyle([...selectedItemIds])
         break
     }
   }
@@ -278,6 +294,7 @@ export function SlideConsole({
                     onPresent={onPresentItem}
                     onDelete={(itemId) => onRemove([itemId])}
                     onRename={onRenameItem}
+                    onEditStyle={(itemId) => onEditStyle([itemId], itemId)}
                   />
                 ))}
               </div>

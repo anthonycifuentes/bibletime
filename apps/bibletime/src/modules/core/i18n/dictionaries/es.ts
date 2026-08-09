@@ -206,6 +206,13 @@ export const es: Record<keyof typeof en, string> = {
   "library.dragToReorder": "Arrastrar para reordenar",
   "library.previewEmpty": "Selecciona una diapositiva para previsualizarla aquí.",
   "library.sendToOutput": "Presentar",
+  "library.editStyle": "Editar estilo",
+  "library.editStyleTitle": "Editar estilo de la diapositiva",
+  "library.editStyleDescription": "Los cambios se aplican solo a esta diapositiva — no se crea ni se modifica ninguna plantilla.",
+  "library.editStyleDescriptionMultiple":
+    "Los cambios se aplican solo a las {{count}} diapositivas seleccionadas — no se crea ni se modifica ninguna plantilla.",
+  "library.editStyleReset": "Usar el estilo de la plantilla",
+  "library.save": "Guardar",
 
   "songs.searchPlaceholder": "Buscar canciones",
   "songs.searchAriaLabel": "Buscar canciones por título, autor o letra",
@@ -417,7 +424,7 @@ export const es: Record<keyof typeof en, string> = {
   "landing.card.templates.blurb": "Tipografía, color y fondos que defines una vez.",
   "landing.card.templates.detail":
     "Arma una plantilla — tipografías, tamaños, alineación, colores, una imagen de fondo o un degradado — y cada diapositiva hecha con ella sale igual. Cambia la plantilla después y las diapositivas la siguen, así que un servicio entero cambia de estilo sin tocar ninguna.",
-  "landing.card.templates.alt": "El editor de plantillas con los controles de tipografía junto a la vista previa",
+  "landing.card.templates.alt": "La pestaña Plantillas con las plantillas guardadas junto a las diapositivas que las usan",
 
   "landing.card.presentation.title": "Una segunda pantalla que se porta bien",
   "landing.card.presentation.blurb": "Su propia ventana para el proyector, controlada desde la tuya.",
