@@ -48,7 +48,15 @@ mac:
   # in the keychain and fails the build when it can't complete a full
   # signing/notarization run. On CI there is no identity at all. To start
   # signing, remove this line and supply CSC_LINK / CSC_KEY_PASSWORD.
+  #
+  # This skips signing entirely, which leaves the bundle unsealed — see
+  # scripts/adhoc-sign.cjs, which repairs that in afterPack. Both lines go
+  # together; removing one without the other ships a "damaged" app.
   identity: null
+
+# Seals the .app with an ad-hoc signature. Not cosmetic: without it macOS
+# calls the download "damaged" and refuses to open it at all.
+afterPack: scripts/adhoc-sign.cjs
 
 win:
   icon: build/icon.ico

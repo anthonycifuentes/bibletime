@@ -13,7 +13,7 @@ import { RELEASES_URL, REPOSITORY_URL } from "@/modules/landing/lib/landing-cont
  * build, and every surface here also offers the always-current Releases
  * index as a way out.
  */
-export const LATEST_VERSION = "0.1.0"
+export const LATEST_VERSION = "0.1.1"
 
 /** `/releases/download/<tag>/<asset>` — the stable public URL for one asset. */
 const assetUrl = (asset: string): string =>
