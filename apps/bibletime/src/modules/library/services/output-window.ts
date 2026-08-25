@@ -1,3 +1,5 @@
+import { isOutputWindowAlive } from "@/modules/library/services/output-heartbeat"
+
 /**
  * The fixed window name every "send to output" reuses. Load-bearing: the
  * second send has to land in the window the operator already placed on the
@@ -41,24 +43,72 @@ const outputWindowFeatures = (): string => {
 }
 
 /**
- * Opens the presentation output window, or focuses the one already open.
+ * The window the last `openOutputWindow` produced. Module-level, not React
+ * state: the eight call sites are spread across hooks and plain handlers,
+ * and there is exactly one output window per console.
+ */
+let outputWindow: Window | null = null
+
+/** The desktop shell exposes a preload bridge; the web build has none. */
+const isDesktopRuntime = (): boolean =>
+  typeof window !== "undefined" && Boolean((window as { bibletime?: unknown }).bibletime)
+
+interface OpenOutputWindowOptions {
+  /**
+   * Bring an already-open output window to the front. Off by default: a
+   * send is not a reason to pull keyboard focus away from the console, and
+   * the slide itself arrives through `storage` events regardless.
+   */
+  focus?: boolean
+}
+
+/**
+ * Opens the presentation output window if none is open. Otherwise leaves
+ * it alone — or, on request, focuses it.
  *
  * The single place `/present` is opened from, so the window name and the
  * popup features cannot drift between the eight call sites that need it.
  *
- * Reuse still works exactly as before: a browser resolves the window *name*
- * first, and when a window with that name already exists it is reused and
- * the features are ignored — so an already-placed, already-fullscreen output
- * window is focused rather than reopened at these bounds.
+ * Why an already-open window must not be reopened: `window.open(url, name)`
+ * with a *non-empty* url and an existing window of that name **navigates**
+ * that window — a full reload of `/present`, which drops HTML fullscreen
+ * and restarts whatever was playing. That was the "fullscreen only lasts
+ * one slide" bug, reproduced in Chromium: a storage write, `focus()`, and
+ * `window.open("", name)` all keep fullscreen; `window.open("/present",
+ * name)` alone loses it. The slide never needed the call — it travels
+ * through `localStorage` + `storage` events — so for an open window there
+ * is nothing left to do.
  *
- * On desktop this whole string is moot: Electron's `setWindowOpenHandler`
- * intercepts the call and builds a real chrome-less `BrowserWindow` with its
- * own remembered bounds. Harmless there, load-bearing on web.
+ * "Open" is known two ways: the handle from opening it, and — after this
+ * console reloaded and lost the handle — the heartbeat `/present` writes
+ * (see `output-heartbeat.ts`).
+ *
+ * On desktop, Electron's `setWindowOpenHandler` intercepts `/present`: it
+ * builds a chrome-less `BrowserWindow` the first time and denies afterwards
+ * — but the *denied* call still drops the output's fullscreen (reproduced
+ * with Playwright: the `window.open` itself does it, not the handler's
+ * `focus()`), so an alive output on desktop is never re-targeted at all.
+ * The web build can reach an existing window without navigating it via
+ * `window.open("", name)`; on desktop that URL would fall through the
+ * handler as a new `about:blank` window, hence the split.
  *
  * Must be called inside a user gesture — a popup opened from a timer or an
  * effect is exactly what popup blockers exist to stop.
  */
-export const openOutputWindow = (): void => {
+export const openOutputWindow = ({ focus = false }: OpenOutputWindowOptions = {}): void => {
   if (typeof window === "undefined") return
-  window.open("/present", OUTPUT_WINDOW_NAME, outputWindowFeatures())
+
+  if (outputWindow && !outputWindow.closed) {
+    if (focus) outputWindow.focus()
+    return
+  }
+
+  if (isOutputWindowAlive()) {
+    if (!focus || isDesktopRuntime()) return
+    outputWindow = window.open("", OUTPUT_WINDOW_NAME, outputWindowFeatures())
+    outputWindow?.focus()
+    return
+  }
+
+  outputWindow = window.open("/present", OUTPUT_WINDOW_NAME, outputWindowFeatures())
 }

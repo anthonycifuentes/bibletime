@@ -19,7 +19,7 @@ export function SettingsView() {
   const { t } = useTranslation()
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+    <div data-density="compact" className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
       <div className="flex items-center gap-3">
         <Button
           type="button"

@@ -74,7 +74,7 @@ export const DEFAULT_SLIDE_TEMPLATE: SlideTemplate = {
   background: PRESET_BACKGROUNDS[0].background,
   fontFamily: DEFAULT_FONT_ID,
   fontColor: "#FFFFFF",
-  fontSize: 36,
+  fontSize: 96,
   bold: true,
   italic: false,
   underline: false,

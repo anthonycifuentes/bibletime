@@ -265,7 +265,7 @@ export function ConsoleView() {
 
   if (!projects.isLoading && projects.projects.length === 0) {
     return (
-      <div className="flex h-svh flex-col">
+      <div data-density="compact" className="flex h-svh flex-col">
         <HeaderBar />
         <UpdateBanner />
         <div className="flex flex-1 items-center justify-center p-6">
@@ -282,7 +282,7 @@ export function ConsoleView() {
   }
 
   return (
-    <div className="flex h-svh flex-col">
+    <div data-density="compact" className="flex h-svh flex-col">
       <HeaderBar />
       <UpdateBanner />
 

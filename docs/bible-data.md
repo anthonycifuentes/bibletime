@@ -44,20 +44,41 @@ BibleTime has two ways of getting Scripture text.
 setup. Its id is exported as `BUNDLED_VERSION_ID` from
 `apps/bibletime/src/modules/bible/services/get-bible-data.ts`.
 
-**Downloaded on demand** — the app fetches a catalog of additional translations and lets the user
-download any of them for offline use:
+**Downloaded on demand** — the app lists a catalog of additional translations and lets the user
+download any of them for offline use. The catalog comes from one of two places:
 
-```
-https://mrk214.github.io/snapshots/data.json
-```
+1. The remote catalog, tried first with a 5-second timeout:
 
-See `apps/bibletime/src/modules/bible/services/get-bible-versions.ts`. This is the only network
-request BibleTime makes in normal operation, it is optional, and it is user-initiated. Once a
-version is downloaded it works offline exactly like the bundled one.
+   ```
+   https://mrk214.github.io/snapshots/data.json
+   ```
+
+2. A **bundled catalog** — `apps/bibletime/src/modules/bible/services/bundled-catalog.ts` — used
+   whenever the remote one cannot be loaded (HTTP error, offline, timeout, malformed body).
+
+> **As of 2026-08-25 the remote `data.json` returns 404.** The `mrk214/snapshots` repository still
+> exists and every per-version file it pointed at still serves; only the catalog file is gone. Until
+> it comes back, every user sees the bundled catalog. Because the remote is still tried first, if the
+> upstream catalog reappears (or grows) the app picks it up with no update.
+
+See `apps/bibletime/src/modules/bible/services/get-bible-versions.ts`. The remote request is the
+only network request BibleTime makes in normal operation, it is optional, and it never fails the
+version list: the bundled RVR1960 and any downloaded translations are always listed, whichever
+catalog loaded — including with no connection at all. Once a version is downloaded it works offline
+exactly like the bundled one.
 
 Translations obtained this way are **not** redistributed by this repository — they are fetched by
 the user, from a third-party host, at the user's request. Their licensing is between the user and
 whoever holds the rights to that text.
+
+#### Refreshing the bundled catalog
+
+The bundled catalog is a transcription of the tables in the
+[`mrk214/snapshots` README](https://github.com/mrk214/snapshots#readme), one block per `lang_key`
+folder (`en___eng___eng`, `es___spa___spa`, `es___spa___spa_es`, `pt___por___por`,
+`pt___por___por_pt`). To refresh it, re-read that README and mirror its rows as `entry(...)` calls;
+`get-bible-versions.test.ts` checks ids are unique and every `json_url` follows the
+`<lang_key>/<ABBR>_vid_<version_id>.json` pattern.
 
 ### The upstream datasets
 
@@ -76,8 +97,8 @@ implementation for consuming these files, and its
 canonical description of the format. Worth reading before changing anything in
 `modules/bible/services/`.
 
-**One catalog covers every language.** `data.json` is global, not per-repository — each entry
-carries `lang_key`, `lang_info`, and `source_repo_url`, and points at its own file:
+**One catalog covers every language.** The catalog (remote `data.json` when it exists, otherwise the
+bundled copy) is global, not per-repository — each entry carries `lang_key` and points at its own file:
 
 ```
 https://mrk214.github.io/snapshots/<lang_key>/<ABBR>_vid_<version_id>.json
@@ -93,7 +114,11 @@ code change**.
 A version file from any of the three repositories has the identical structure to
 `public/bible-data/rvr1960.json` — `version_id`, `local_abbreviation`, `local_title`, `language`,
 `publisher`, `copyright`, and `books[].chapters[].items[]`. Verified against
-`en___eng___eng/KJV_vid_1.json`.
+`en___eng___eng/KJV_vid_1.json` — with one exception: the snapshot files carry **no `is_chapter`**
+field and no `*.INTRO1` front-matter chapters, while the bundled export has both. Never filter on
+`is_chapter` directly; use `isReadableChapter` (`modules/bible/lib`), which falls back to the USFM
+code when the flag is absent. Filtering on the raw flag is exactly what once left the Chapter and
+Verse columns empty for every non-bundled translation.
 
 That is why nothing language-specific exists in the reader: `get-bible-versions.ts` applies no
 language filter, and `get-bible-data.ts` parses a downloaded version through the same path as the

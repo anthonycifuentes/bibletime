@@ -202,7 +202,9 @@ export const useSlideshow = ({ items, templates, seedItemId }: UseSlideshowOptio
 
   /** Opens (or refocuses) the output window and re-sends the current slide — the recovery for a closed or blocked output. */
   const reopenOutput = useCallback(() => {
-    openOutputWindow()
+    // Explicit recovery, so bringing an open window forward is wanted here
+    // — unlike a plain send, which must not steal focus from the controller.
+    openOutputWindow({ focus: true })
     if (currentItem) send(currentItem)
     if (blank) setLiveSlideBlank(blank)
   }, [currentItem, send, blank])
