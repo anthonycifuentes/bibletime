@@ -1,3 +1,4 @@
+export * from "./bundled-catalog"
 export * from "./downloads"
 export * from "./get-bible-data"
 export * from "./get-bible-versions"

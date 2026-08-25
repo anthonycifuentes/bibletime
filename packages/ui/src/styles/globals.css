@@ -125,6 +125,18 @@
     --sidebar-ring: oklch(0.556 0 0);
 }
 
+/*
+ * Compact console density. Tailwind sizes everything in rem, so root
+ * font-size is the one knob that scales the whole console the way browser
+ * zoom does — operators on 13" laptops were zooming to 90% by hand. Scoped
+ * with :has() so the projected /present window and the landing page (which
+ * never carry the attribute) keep their natural scale. Pure CSS: no attribute
+ * flip after hydration, so nothing flashes on load.
+ */
+html:has([data-density="compact"]) {
+  font-size: 90%;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

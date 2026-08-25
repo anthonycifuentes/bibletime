@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { useTranslation } from "@/modules/core/i18n"
-import { useLiveSlide } from "@/modules/library"
+import { startOutputHeartbeat, useLiveSlide } from "@/modules/library"
 import { useMediaAvailability } from "@/modules/media"
 import { DEFAULT_SLIDE_TEMPLATE, SlideFrame } from "@/modules/presentation"
 import { cn } from "@workspace/ui/lib/utils"
@@ -63,6 +63,10 @@ function PresentRoute() {
   const { isMissing: isMediaMissing, missingReason, url: mediaUrl } = useMediaAvailability(slide?.media)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isHintVisible, setIsHintVisible] = useState(true)
+
+  // Tells the console this window is open, so a later send focuses it
+  // instead of reopening (= reloading) it and losing fullscreen.
+  useEffect(() => startOutputHeartbeat(), [])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

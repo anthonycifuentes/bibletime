@@ -34,5 +34,5 @@ function NewTemplateRoute() {
     })
   }, [create, navigate, t])
 
-  return <p className="p-6 text-sm text-muted-foreground">{t("templates.creating")}</p>
+  return <p data-density="compact" className="p-6 text-sm text-muted-foreground">{t("templates.creating")}</p>
 }

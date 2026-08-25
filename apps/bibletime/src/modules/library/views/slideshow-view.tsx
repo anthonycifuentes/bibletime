@@ -168,7 +168,7 @@ export function SlideshowView() {
   // showing the last slide sent and the operator needs a way out.
   if (items.length === 0) {
     return (
-      <div className="flex h-svh flex-col items-center justify-center gap-4 bg-neutral-950 p-6 text-center">
+      <div data-density="compact" className="flex h-svh flex-col items-center justify-center gap-4 bg-neutral-950 p-6 text-center">
         <p className="text-sm text-white/60">
           {library.isLoading ? t("slideshow.loading") : t("slideshow.deckEmpty")}
         </p>
@@ -182,7 +182,7 @@ export function SlideshowView() {
   }
 
   return (
-    <div className="flex h-svh flex-col gap-4 bg-neutral-950 p-4 text-white">
+    <div data-density="compact" className="flex h-svh flex-col gap-4 bg-neutral-950 p-4 text-white">
       <div className="flex min-h-0 flex-1 gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <CurrentSlidePane

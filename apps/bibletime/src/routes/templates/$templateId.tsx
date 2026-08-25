@@ -147,7 +147,7 @@ function TemplateEditorRoute() {
   const isReadOnly = isBundled(existing.id) || !canWrite
 
   return (
-    <div className="flex w-full flex-col gap-6 p-6">
+    <div data-density="compact" className="flex w-full flex-col gap-6 p-6">
       <div className={cn("flex items-center gap-3", isReadOnly && "mx-auto w-full max-w-2xl")}>
         <Button type="button" variant="ghost" size="icon-sm" onClick={handleBack}>
           <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
