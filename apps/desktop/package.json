@@ -20,8 +20,8 @@
     "package": "pnpm --filter web build && pnpm run build && electron-builder --config electron-builder.yml"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
-    "concurrently": "^10.0.4",
+    "@types/node": "^26.4.0",
+    "concurrently": "^10.0.5",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.3",
     "typescript": "^6.0.3",
